@@ -7,28 +7,37 @@ import textStyles from '../config-texts';
 import spacings from '../config-spacing';
 
 const RankItem = ({ user }) => {
+  // Définir la couleur et le symbole en fonction du changement
+  const changeColor = user.change >= 0 ? colors.indigo : colors.red;
+  const changeSymbol = user.change >= 0 ? "↗" : "↘";
+
   return (
     <View style={styles.container}>
       <Image 
-          source={{ uri: 'https://icons8.com/l/3d/images/3_2_with_phone_man_1.webp' }} // Remplace par l'URL de l'image ou le chemin local
-          style={styles.avatar}
-    />
+        source={require("../assets/adaptive-icon.png")} // Remplace par l'URL de l'image ou le chemin local
+        style={styles.avatar}
+      />
       <View style={styles.infoContainer}>
         <Text style={[textStyles.body, styles.userName]}>{user.name}</Text>
         <View style={styles.rankContainer}>
           <Text style={styles.rank}>{user.rank}</Text>
-          <Text style={styles.points}>{user.points} p.</Text>
+
         </View>
       </View>
       <View style={styles.statsContainer}>
         <Text style={styles.amount}>{user.amount} €</Text>
         <View style={styles.changeContainer}>
-          <Text style={styles.change}>{user.change}%</Text>
+          <Text style={[styles.change, { color: changeColor }]}>
+            {changeSymbol} {user.change}%
+          </Text>
         </View>
       </View>
     </View>
   );
 };
+
+
+
 
 // Define the styles
 const styles = StyleSheet.create({

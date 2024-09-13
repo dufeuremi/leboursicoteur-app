@@ -61,7 +61,7 @@ export default function CreateGameStep5({ navigation }) {
       console.log('Réponse de l\'API :', result);
       
       // Naviguer vers la salle d'attente ou une autre étape après la réussite
-      navigation.navigate('WaitingRoom');
+      navigation.navigate('Fonds');
 
     } catch (error) {
       console.error('Erreur lors de la requête API', error);

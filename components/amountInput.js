@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import configColors from '../config-colors';
 import configSpacing from '../config-spacing';
 
-const AmountInput = ({ placeholder, keyboard, capitalize, secureTextEntrys }) => {
-  const [value, setValue] = useState('');
+const AmountInput = ({ placeholder, capitalize, secureTextEntry, value, onChangeText }) => {
   const [cursorPosition, setCursorPosition] = useState({ start: 0, end: 0 });
 
   const handleChange = (text) => {
@@ -20,23 +19,24 @@ const AmountInput = ({ placeholder, keyboard, capitalize, secureTextEntrys }) =>
       cleanedValue = decimalParts[0] + '.' + decimalParts.slice(1).join('');
     }
 
-    setValue(cleanedValue);
+    // Appeler la fonction de rappel onChangeText pour mettre à jour le parent
+    onChangeText(cleanedValue);
 
-    // Met à jour la position du curseur (avant le signe € si la valeur n'est pas vide)
+    // Met à jour la position du curseur
     const cursorPos = cleanedValue.length;
     setCursorPosition({ start: cursorPos, end: cursorPos });
   };
 
   return (
     <View style={styles.container}>
-      <TextInput 
-        style={styles.input} 
+      <TextInput
+        style={styles.input}
         placeholder={placeholder}
-        placeholderTextColor={configColors.grey4} 
+        placeholderTextColor={configColors.grey4}
         autoCapitalize={capitalize}
-        secureTextEntry={secureTextEntrys}
+        secureTextEntry={secureTextEntry}
         onChangeText={handleChange}
-        value={value ? `${value} €` : ''} // Affiche la valeur avec le symbole € si non vide
+        value={value} // Assurez-vous que value est une chaîne
         keyboardType="numeric"
         selection={cursorPosition} // Positionne le curseur
       />
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   container: {
     paddingTop: configSpacing.spacing.small,
     paddingBottom: configSpacing.spacing.small,
-    width: '100%'
+    width: '100%',
   },
   input: {
     height: 50,

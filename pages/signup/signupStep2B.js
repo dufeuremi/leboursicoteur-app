@@ -82,7 +82,6 @@ export default function SignupStep2B({ navigation }) {
   
       // Redirection vers la page d'accueil
       navigation.navigate('Home');
-      Alert.alert('Succès', 'Connexion réussie!');
       
     } catch (error) {
       // Vérification des erreurs de réponse

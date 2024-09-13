@@ -59,17 +59,22 @@ function FondsScreen() {
       const inProgress = [];
       const expired = [];
       console.log(data);
+  
       // Parcourir le tableau `games` dans la réponse
       data.games.forEach(gameArray => {
-        const game = gameArray[0];  // Accéder à l'élément unique de chaque tableau
-        
-        const finishAt = moment(game.finish_at);
-        if (game.isWaiting) {
-          waiting.push(game);
-        } else if (finishAt.isBefore(now)) {
-          expired.push(game);
+        const game = gameArray.length > 0 ? gameArray[0] : null;  // Vérifier si gameArray[0] existe
+  
+        if (game) {
+          const finishAt = moment(game.finish_at);
+          if (game.isWaiting) {
+            waiting.push(game);
+          } else if (finishAt.isBefore(now)) {
+            expired.push(game);
+          } else {
+            inProgress.push(game);
+          }
         } else {
-          inProgress.push(game);
+          console.error('gameArray est vide ou undefined:', gameArray);
         }
       });
   
@@ -80,6 +85,7 @@ function FondsScreen() {
       console.error('Erreur lors de la récupération des données :', error);
     }
   };
+  
   
 
   useEffect(() => {

@@ -1,5 +1,18 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { Image, View, Text, ScrollView, StyleSheet, RefreshControl } from "react-native";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
+import {
+  Image,
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  RefreshControl,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import BottomSheet from "@gorhom/bottom-sheet";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -16,12 +29,28 @@ import SearchBar from "../components/searchInput";
 import configSpacing from "../config-spacing";
 import AmountInput from "../components/amountInput";
 import configColors from "../config-colors";
+import { Alert, Keyboard  } from 'react-native'; // Importer Alert pour afficher des notifications
+
 
 export default function Game() {
   const [refreshing, setRefreshing] = useState(false);
   const [gameData, setGameData] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [stockID, setStockID] = useState("");
+  const [userID, setUserID] = useState(0);
+  const [selectedStock, setSelectedStock] = useState(null);
+
+  useEffect(() => {
+    if (selectedStock) {
+      // Trouver la version actuelle de l'action dans gameData
+      const updatedStock = gameData.stock.find(stock => stock.name === selectedStock.name);
+      if (updatedStock) {
+        setSelectedStock(updatedStock); // Mettre à jour les informations de l'action en temps réel
+      }
+    }
+  }, [gameData, selectedStock]);
+  
+
 
   const bottomSheetRef = useRef(null);
   const situationSheetRef = useRef(null);
@@ -38,6 +67,79 @@ export default function Game() {
   const API_URL = "https://xmpt-xa8m-h6ai.n7c.xano.io/api:RMY1IHfK/game/get";
 
   const snapPoints = useMemo(() => ["100%", "100%"], []);
+
+
+  const [investmentAmount, setInvestmentAmount] = useState("");
+
+const handleConfirmPurchase = async () => {
+  try {
+    const userToken = await AsyncStorage.getItem("userToken");
+
+    if (!selectedStock || !userToken) {
+      console.error("Aucune action sélectionnée ou token utilisateur manquant");
+      return;
+    }
+
+    const stockPrice = selectedStock.value;
+    const investment = parseFloat(investmentAmount);
+
+    if (isNaN(investment) || investment <= 0) {
+      Alert.alert("Erreur", "Veuillez entrer un montant d'investissement valide.");
+      return;
+    }
+
+    const userCash = gameData.users_data[userID].cash;
+
+    // Vérifier si l'investissement dépasse le solde disponible
+    if (investment > userCash) {
+      Alert.alert("Erreur", "Le montant sélectionné dépasse votre solde disponible.");
+      return;
+    }
+
+    const quantity = investment / stockPrice;
+
+    if (isNaN(quantity) || quantity <= 0) {
+      console.error("Quantité calculée invalide :", quantity);
+      Alert.alert("Erreur", "La quantité calculée est invalide.");
+      return;
+    }
+
+    console.log("Montant de l'investissement :", investment);
+    console.log("Prix de l'action :", stockPrice);
+    console.log("Quantité d'actions à acheter :", quantity);
+
+    const response = await fetch("https://xmpt-xa8m-h6ai.n7c.xano.io/api:RMY1IHfK/game/buy", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: userToken,
+      },
+      body: JSON.stringify({
+        name: selectedStock.name,
+        quantity: quantity,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("La requête d'achat a échoué");
+    }
+
+    const responseData = await response.json();
+    console.log("Réponse de l'API :", responseData);
+
+    // Fermer le clavier, les popups, et afficher un message de succès
+    Keyboard.dismiss();
+    yyySheetRef.current?.close();
+    xxxSheetRef.current?.close();
+    buySheetRef.current?.close();
+
+    Alert.alert("Achat réussi", "Votre achat a été effectué avec succès !");
+  } catch (error) {
+    console.error("Erreur lors de la confirmation de l'achat :", error);
+    Alert.alert("Erreur", "Une erreur s'est produite lors de l'achat.");
+  }
+};
 
   const fetchData = async () => {
     try {
@@ -59,16 +161,41 @@ export default function Game() {
         body: JSON.stringify({ game_id: selectedGameId }),
       });
 
-      const data = await response.json();
-      setGameData(data);
-      navigation.setOptions({ title: data.game.name });
-      setRefreshing(false);
+      if (!response.ok) {
+        throw new Error("La requête a échoué");
+      }
 
+      const data = await response.json();
+
+      // Vérifier que les données sont valides
+      if (!data || !data.game || !data.users_data) {
+        throw new Error("Données invalides reçues");
+      }
+
+      setGameData(data); // Mettre à jour les données seulement si la requête a réussi
+      navigation.setOptions({ title: data.game.name });
+      setUserID(data.user_id);
+      setRefreshing(false);
     } catch (error) {
       console.error("Erreur lors de la récupération des données :", error);
       setRefreshing(false);
+      // Laisser les anciennes données intactes et réessayer après 2 secondes
+      setTimeout(fetchData, 2000); // Réessayer après 2 secondes
     }
   };
+
+  // Utiliser l'effet pour rafraîchir les données périodiquement
+  useEffect(() => {
+    fetchData(); // Appel initial pour charger les données
+
+    // Définir un intervalle pour rafraîchir les données toutes les X secondes
+    const interval = setInterval(() => {
+      fetchData(); // Appeler fetchData pour actualiser les données
+    }, 20000);
+
+    // Nettoyer l'intervalle lorsque le composant est démonté
+    return () => clearInterval(interval);
+  }, []);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -79,15 +206,13 @@ export default function Game() {
   }, []);
 
   useEffect(() => {
-    // Définir un intervalle pour rafraîchir les données toutes les 2 secondes
     const interval = setInterval(() => {
       fetchData(); // Appeler fetchData pour actualiser les données
-    }, 3000);
-  
+    }, 20000);
+
     // Nettoyer l'intervalle lorsque le composant est démonté
     return () => clearInterval(interval);
   }, []);
-  
 
   useEffect(() => {
     if (gameData) {
@@ -136,49 +261,79 @@ export default function Game() {
   }
 
   const calculatePortfolioValue = (userData) => {
-  const cash = userData.cash;
-  const stockValue = userData.wallet.data.reduce((acc, stock) => {
-    // Trouver la valeur actuelle de l'action
+    const cash = userData.cash;
+    const stockValue = userData.wallet.data.reduce((acc, stock) => {
+      // Trouver la valeur actuelle de l'action
+      const currentStock = gameData.stock.find((s) => s.name === stock.name);
+      const stockPrice = currentStock ? currentStock.value : 0; // Utiliser 0 si la valeur n'est pas trouvée
+      return acc + stock.quantity * stockPrice;
+    }, 0);
+    return cash + stockValue;
+  };
+
+  const calculateCapitalValue = (userData) => {
+    const stockValue = userData.wallet.data.reduce((acc, stock) => {
+      // Trouver la valeur actuelle de l'action
+      const currentStock = gameData.stock.find((s) => s.name === stock.name);
+      const stockPrice = currentStock ? currentStock.value : 0; // Utiliser 0 si la valeur n'est pas trouvée
+      return acc + stock.quantity * stockPrice;
+    }, 0);
+    return stockValue;
+  };
+
+  const sortedRankData = gameData.users_data
+    .map((userData) => {
+      // Récupérer la valeur précédente du cash et du portefeuille stockée ou initialiser à 0
+      const previousPortfolioValue = userData.previousPortfolioValue || 0;
+
+      // Calculer la nouvelle valeur du portefeuille en ajoutant la nouvelle valeur au cash précédent
+      const newPortfolioValue = calculatePortfolioValue(userData);
+      const currentPortfolioValue = newPortfolioValue;
+
+      // Mettre à jour la valeur précédente pour le prochain calcul
+      userData.previousPortfolioValue = currentPortfolioValue;
+
+      return {
+        name: `${gameData.users.find((u) => u.id === userData._boursicoteur_users_id).firstname} ${gameData.users.find((u) => u.id === userData._boursicoteur_users_id).lastname}`,
+        rank: "", // Le rang sera défini après le tri
+        portfolioValue: currentPortfolioValue.toFixed(2),
+        cash: userData.cash,
+        userId: userData._boursicoteur_users_id,
+      };
+    })
+    .sort((a, b) => b.portfolioValue - a.portfolioValue);
+
+  // Mise à jour des rangs après le tri
+  sortedRankData.forEach((user, index) => {
+    if (index === 0) {
+      user.rank = "1er";
+    } else {
+      user.rank = `${index + 1}ème`;
+    }
+  });
+
+  const marketData = gameData.users_data.find((user) => user._boursicoteur_users_id === gameData.user_id).wallet.data.map((stock) => {
+    // Trouver la valeur actuelle de l'action dans gameData.stock
     const currentStock = gameData.stock.find((s) => s.name === stock.name);
     const stockPrice = currentStock ? currentStock.value : 0; // Utiliser 0 si la valeur n'est pas trouvée
-    return acc + stock.quantity * stockPrice;
-  }, 0);
-  return cash + stockValue;
-};
 
+    // Mettre à jour la valeur précédente pour le prochain calcul
+    stock.previousStockValue = stockPrice;
 
-const sortedRankData = gameData.users_data
-.map((userData) => ({
-  name: `${gameData.users.find((u) => u.id === userData._boursicoteur_users_id).firstname} ${gameData.users.find((u) => u.id === userData._boursicoteur_users_id).lastname}`,
-  rank: "", // Le rang sera défini après le tri
-  portfolioValue: calculatePortfolioValue(userData).toFixed(2),
-  cash: userData.cash,
-  userId: userData._boursicoteur_users_id,
-}))
-.sort((a, b) => b.portfolioValue - a.portfolioValue);
+    return {
+      icon: require("../assets/adaptive-icon.png"),
+      name: stock.name,
+      value: `${stock.name} / ${stock.quantity.toFixed(2)}`,
+      percentageChange: "↗ -%", // Pourcentage statique d'exemple
+      amount: `${(stock.quantity * stockPrice).toFixed(2)}`, // Calculer la valeur actuelle du portefeuille
+    };
+  });
 
-// Mise à jour des rangs après le tri
-sortedRankData.forEach((user, index) => {
-user.rank = `${index + 1}ème`;
-});
-
-
-const marketData = gameData.users_data[0].wallet.data.map((stock, index) => {
-  // Trouver la valeur actuelle de l'action dans gameData.stock
-  const currentStock = gameData.stock.find((s) => s.name === stock.name);
-  const stockPrice = currentStock ? currentStock.value : 0; // Utiliser 0 si la valeur n'est pas trouvée
-
-  return {
-    icon: require("../assets/adaptive-icon.png"),
-    value: `${stock.name} / ${stock.quantity.toFixed(2)}`,
-    percentageChange: "↗ 0%", // À ajuster selon la logique de votre application
-    amount: `${(stock.quantity * stockPrice).toFixed(2)} €`, // Utiliser le prix réel ici
-  };
-});
-  
-  const userRank = sortedRankData.findIndex((user) => user.userId === gameData.user_id) + 1;
+  const userRank =
+    sortedRankData.findIndex((user) => user.userId === gameData.user_id) + 1;
   const totalPlayers = sortedRankData.length;
   const userRankText = userRank === 1 ? "1er" : `${userRank}ème`;
+
 
 
   return (
@@ -202,52 +357,43 @@ const marketData = gameData.users_data[0].wallet.data.map((stock, index) => {
             Classement
           </Text>
           <View style={styles.container}>
-  <View style={styles.walletContainer}>
-    <Ionicons
-      name="medal-outline"
-      size={24}
-      color={colors.black1}
-      style={styles.icon}
-    />
-    <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
-      {userRankText} / {totalPlayers}
-    </Text>
-    <Text
-      style={[
-        textStyles.heading2,
-        { color: colors.indigo, marginLeft: 10, fontSize: 18 },
-      ]}
-    >
-      ↗ 1 place(s) 
-    </Text>
-  </View>
-</View>
+            <View style={styles.walletContainer}>
+              <Ionicons
+                name="medal-outline"
+                size={24}
+                color={colors.black1}
+                style={styles.icon}
+              />
+              <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
+                {userRankText} / {totalPlayers} boursicoteurs
+              </Text>
+
+            </View>
+          </View>
           <View style={styles.container}>
             <View>
-            {sortedRankData.map((user, index) => (
-  <RankItem
-    key={index}
-    user={{
-      avatar: "../assets/adaptive-icon.png",
-      name: user.name,
-      rank: user.rank,
-      points: "N/A",
-      amount: `${user.portfolioValue}`,
-      change: "N/A",
-    }}
-  />
-))}
+              {sortedRankData.map((user, index) => (
+                <RankItem
+                  key={index}
+                  user={{
+                    avatar: "../assets/adaptive-icon.png",
+                    name: user.name,
+                    rank: user.rank,
 
+                    amount: `${user.portfolioValue}`,
+                    change: "-", // Pourcentage statique d'exemple
+                  }}
+                />
+              ))}
 
-
-<View  style={{ marginTop: 20 }}>
-              <Button
-               
-                type="secondary"
-                title="Voir le classement"
-                iconName="arrow-forward"
-                onPress={() => bottomSheetRef.current?.snapToIndex(1)}
-              /></View>
+              <View style={{ marginTop: 20 }}>
+                <Button
+                  type="secondary"
+                  title="Voir le classement"
+                  iconName="arrow-forward"
+                  onPress={() => bottomSheetRef.current?.snapToIndex(1)}
+                />
+              </View>
             </View>
           </View>
           <Text style={[textStyles.heading1, { marginVertical: 15 }]}>
@@ -262,17 +408,27 @@ const marketData = gameData.users_data[0].wallet.data.map((stock, index) => {
                 style={styles.icon}
               />
               <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
-                {calculatePortfolioValue(gameData.users_data[0]).toFixed(2)} €
+                {calculatePortfolioValue(gameData.users_data[userID]).toFixed(2)} €
               </Text>
               <Text
                 style={[
                   textStyles.heading2,
-                  { color: colors.indigo, marginLeft: 10, fontSize: 18 },
+                  {
+                    color: colors.indigo,
+                    marginLeft: 10,
+                    fontSize: 18,
+                  },
                 ]}
               >
-                ↗ 1.2%
+                ↗ -% {/* Pourcentage statique d'exemple */}
               </Text>
             </View>
+            <Text style={[textStyles.body, { marginVertical: 10 }]}>
+              CAPITAL : {calculateCapitalValue(gameData.users_data[userID]).toFixed(2)} €
+            </Text>
+            <Text style={[textStyles.body, { marginBottom: 15 }]}>
+              LIQUIDITES : {gameData.users_data[userID].cash} €
+            </Text>
             <Button
               type="secondary"
               title="Voir en détails"
@@ -288,14 +444,14 @@ const marketData = gameData.users_data[0].wallet.data.map((stock, index) => {
               key={index}
               onPress={() => {
                 setStockID(market);
-                marketSheetRef.current?.snapToIndex(0);
+                marketSheetRef.current?.snapToIndex(userID);
               }}
-              
             >
               <MarketBadge
                 icon={market.icon}
                 value={market.value}
-                percentageChange={market.percentageChange}
+                name={market.name}
+                percentageChange={market.percentageChange} // Pourcentage statique d'exemple
                 amount={market.amount}
                 extraInfo={market.extraInfo}
               />
@@ -342,41 +498,39 @@ const marketData = gameData.users_data[0].wallet.data.map((stock, index) => {
         <View style={styles.contentContainer}>
           <Text style={styles.containerHeadline}>Classement</Text>
           <View style={styles.container}>
-          <View style={styles.walletContainer}>
-    <Ionicons
-      name="medal-outline"
-      size={24}
-      color={colors.black1}
-      style={styles.icon}
-    />
-    <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
-      {userRankText} / {totalPlayers}
-    </Text>
-    <Text
-      style={[
-        textStyles.heading2,
-        { color: colors.indigo, marginLeft: 10, fontSize: 18 },
-      ]}
-    >
-      ↗ 1 place(s) 
-    </Text>
-  </View>
-
+            <View className={styles.walletContainer}>
+              <Ionicons
+                name="medal-outline"
+                size={24}
+                color={colors.black1}
+                style={styles.icon}
+              />
+              <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
+                {userRankText} / {totalPlayers}
+              </Text>
+              <Text
+                style={[
+                  textStyles.heading2,
+                  { color: colors.indigo, marginLeft: 10, fontSize: 18 },
+                ]}
+              >
+                ↗ 1 place(s)
+              </Text>
+            </View>
           </View>
           {sortedRankData.map((user, index) => (
-                <RankItem
-                  key={index}
-                  user={{
-                    avatar: "../assets/adaptive-icon.png",
-                    name: user.name,
-                    rank: user.rank,
-                    points: "N/A",
-                    amount: `${user.portfolioValue} `,
-                    change: "N/A",
-                  }}
-                />
-              ))}
-          {/*<RankItem key={index} user={gameData.user[0]} />*/}
+            <RankItem
+              key={index}
+              user={{
+                avatar: "../assets/adaptive-icon.png",
+                name: user.name,
+                rank: user.rank,
+                points: "-",
+                amount: `${user.portfolioValue}`,
+                change: "-", // Pourcentage statique d'exemple
+              }}
+            />
+          ))}
         </View>
       </BottomSheet>
       {/* Portefeuille*/}
@@ -397,25 +551,31 @@ const marketData = gameData.users_data[0].wallet.data.map((stock, index) => {
           Portefeuille
         </Text>
         <View style={styles.container}>
-        <View style={styles.walletContainer}>
-              <Ionicons
-                name="wallet-outline"
-                size={24}
-                color={colors.black1}
-                style={styles.icon}
-              />
-              <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
-                {calculatePortfolioValue(gameData.users_data[0]).toFixed(2)} €
-              </Text>
-              <Text
-                style={[
-                  textStyles.heading2,
-                  { color: colors.indigo, marginLeft: 10, fontSize: 18 },
-                ]}
-              >
-                ↗ 1.2%
-              </Text>
-            </View>
+          <View style={styles.walletContainer}>
+            <Ionicons
+              name="wallet-outline"
+              size={24}
+              color={colors.black1}
+              style={styles.icon}
+            />
+            <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
+              {calculatePortfolioValue(gameData.users_data[userID]).toFixed(2)} €
+            </Text>
+            <Text
+              style={[
+                textStyles.heading2,
+                { color: colors.indigo, marginLeft: 10, fontSize: 18 },
+              ]}
+            >
+              ↗ -% {/* Pourcentage statique d'exemple */}
+            </Text>
+          </View>
+          <Text style={[textStyles.body, { marginVertical: 10 }]}>
+            CAPITAL : {calculateCapitalValue(gameData.users_data[userID]).toFixed(2)} €
+          </Text>
+          <Text style={[textStyles.body, { marginBottom: 15 }]}>
+            LIQUIDITES : {gameData.users_data[userID].cash} €
+          </Text>
         </View>
       </BottomSheet>
       {/* Detail action*/}
@@ -427,7 +587,10 @@ const marketData = gameData.users_data[0].wallet.data.map((stock, index) => {
         onChange={(index) => handleSheetChanges(index, marketSheetRef)}
       >
         <View style={styles.bottomSheet}>
-          <Text style={[textStyles.body, { color: colors.black2 }]}> {stockID.value}</Text>
+          <Text style={[textStyles.body, { color: colors.black2 }]}>
+            {" "}
+            {stockID.value}
+          </Text>
 
           <Text style={textStyles.heading1}>{stockID.amount} € </Text>
           <Text
@@ -436,99 +599,93 @@ const marketData = gameData.users_data[0].wallet.data.map((stock, index) => {
               { color: colors.indigo, fontSize: 18 },
             ]}
           >
-             {stockID.percentageChange}
+            {stockID.percentageChange}
           </Text>
         </View>
-
-
       </BottomSheet>
 
-
-
-
-
-
-
-      
       {/* Achat partie 1*/}
       <BottomSheet
-        ref={buySheetRef}
-        index={-1}
-        snapPoints={snapPoints}
-        enablePanDownToClose={true}
-        onChange={(index) => handleSheetChanges(index, buySheetRef)}
-      >
-        <View>
-          <ScrollView
-            contentContainerStyle={{ padding: configSpacing.spacing.medium }}
-          >
-            <Text style={textStyles.heading1}>Acheter</Text>
-            <Text style={[textStyles.body, { color: colors.black2 }]}>
-              Selectionner une position
-            </Text>
-            <SearchBar placeholder="Search..." />
+  ref={buySheetRef}
+  index={-1}
+  snapPoints={snapPoints}
+  enablePanDownToClose={true}
+  onChange={(index) => handleSheetChanges(index, buySheetRef)}
+>
+  <View>
+    <ScrollView contentContainerStyle={{ padding: configSpacing.spacing.medium }}>
+      <Text style={textStyles.heading1}>Acheter</Text>
+      <Text style={[textStyles.body, { color: colors.black2 }]}>
+        Sélectionner une société
+      </Text>
+      <SearchBar placeholder="Rechercher..." />
 
-            {marketData.map((market, index) => (
-              <TouchableOpacity
-                key={index}
-                onPress={() => xxxSheetRef.current?.snapToIndex(0)}
-              >
-                <MarketBadge
-                  icon={market.icon}
-                  value={market.value}
-                  percentageChange={market.percentageChange}
-                  amount={market.amount}
-                  extraInfo={market.extraInfo}
-                />
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      </BottomSheet>
+      {gameData.stock.map((stock, index) => (
+  <TouchableOpacity
+    key={index}
+    onPress={() => {
+      setSelectedStock(stock); // Mettre à jour l'action sélectionnée
+      xxxSheetRef.current?.snapToIndex(0);
+    }}
+  >
+    <MarketBadge
+      icon={require("../assets/adaptive-icon.png")}
+      name={stock.name}
+      value={`${stock.name} / ${stock.value.toFixed(2)} €` }
+      percentageChange="↗ -%" // Valeur statique en exemple
+      amount={`${stock.value.toFixed(2)}`}
+    />
+  </TouchableOpacity>
+))}
+
+    </ScrollView>
+  </View>
+</BottomSheet>
       {/* Achat partie 2*/}
       <BottomSheet
-        ref={xxxSheetRef}
-        index={-1}
-        snapPoints={snapPoints}
-        enablePanDownToClose={true}
-        onChange={(index) => handleSheetChanges(index, xxxSheetRef)}
+  ref={xxxSheetRef}
+  index={-1}
+  snapPoints={snapPoints}
+  enablePanDownToClose={true}
+  onChange={(index) => handleSheetChanges(index, xxxSheetRef)}
+>
+  <View style={{ padding: configSpacing.spacing.medium }}>  
+    <Text style={textStyles.heading1}>{selectedStock ? selectedStock.name : "BSC"}</Text>
+    <Text style={[textStyles.body, { color: colors.black2 }]}>
+      Cours de l'action
+    </Text>
+    <View style={styles.walletContainer}>
+      <Ionicons
+        name="logo-euro"
+        size={24}
+        color={colors.black1}
+        style={styles.icon}
+      />
+      <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
+        {selectedStock ? selectedStock.value.toFixed(2) : "18290,82"} €
+      </Text>
+      <Text
+        style={[
+          textStyles.heading2,
+          { color: colors.indigo, marginLeft: 10, fontSize: 18 },
+        ]}
       >
-        <View >
-          <Text style={textStyles.heading1}>BSC</Text>
-          <Text style={[textStyles.body, { color: colors.black2 }]}>
-            Cours de l'action
-          </Text>
-          <View style={styles.walletContainer}>
-            <Ionicons
-              name="logo-euro"
-              size={24}
-              color={colors.black1}
-              style={styles.icon}
-            />
-            <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
-              18290,82
-            </Text>
-            <Text
-              style={[
-                textStyles.heading2,
-                { color: colors.indigo, marginLeft: 10, fontSize: 18 },
-              ]}
-            >
-              ↗ 1.2%
-            </Text>
-          </View>
+        {selectedStock ? selectedStock.percentageChange : "↗ -%"}
+      </Text>
+    </View>
 
-          <Button
-            type="primary"
-            iconName="logo-euro"
-            title="Acheter"
-            onPress={() => {
-              yyySheetRef.current?.snapToIndex(0);
-              xxxSheetRef.current?.close();
-            }}
-          />
-        </View>
-      </BottomSheet>
+    <Button
+      type="primary"
+      iconName="logo-euro"
+      title="Acheter"
+      onPress={() => {
+        yyySheetRef.current?.snapToIndex(0);
+        xxxSheetRef.current?.close();
+      }}
+    />
+  </View>
+</BottomSheet>
+
       {/* Achat partie 3*/}
       <BottomSheet
         ref={yyySheetRef}
@@ -557,26 +714,26 @@ const marketData = gameData.users_data[0].wallet.data.map((stock, index) => {
               { color: colors.black1, marginBottom: 10 },
             ]}
           >
-            28,82 €
+            {gameData.users_data[userID].cash.toFixed(2)} €
           </Text>
           <AmountInput
-            placeholder="Montant"
-            keyboard="digits"
-            capitalize="yes"
-          />
+          placeholder="Montant"
+          capitalize="none"
+          secureTextEntry={false}
+          value={investmentAmount} // Passez la valeur de l'état comme prop
+          onChangeText={(text) => setInvestmentAmount(text)} // Mettre à jour l'état du parent
+        />
+
 
           <Button
             type="primary"
             title="Confirmer l'achat"
             iconName="checkmark-outline"
-            onPress={() => {
-              yyySheetRef.current?.close();
-              xxxSheetRef.current?.close();
-              buySheetRef.current?.close();
-            }}
+            onPress={handleConfirmPurchase}
           />
         </View>
       </BottomSheet>
+
       {/* Vente partie 1*/}
       <BottomSheet
         ref={sellSheetRef}
@@ -648,7 +805,7 @@ const marketData = gameData.users_data[0].wallet.data.map((stock, index) => {
                 { color: colors.indigo, marginLeft: 10, fontSize: 18 },
               ]}
             >
-              ↗ 1.2%
+              ↗ -%
             </Text>
           </View>
 
@@ -744,11 +901,11 @@ const marketData = gameData.users_data[0].wallet.data.map((stock, index) => {
                 { color: colors.indigo, marginLeft: 10, fontSize: 18 },
               ]}
             >
-              ↗ 1.2%
+              ↗ -%
             </Text>
           </View>
         </View>
-      </BottomSheet> 
+      </BottomSheet>
     </View>
   );
 }
