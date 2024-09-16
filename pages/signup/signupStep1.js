@@ -39,10 +39,11 @@ export default function SignupStep1({ navigation }) {
         navigation.navigate('SignupStep2');
         // Enregistre l'email temporairement
         await AsyncStorage.setItem('tempo-email', email);
+        await AsyncStorage.setItem('userEmail', email);
         // Ajoute également l'email dans create_account_email
         await AsyncStorage.setItem('create_account_email', email);
       } else {
-        // Navigue vers une autre étape si le compte existe
+        await AsyncStorage.setItem('tempo-email', email);
         navigation.navigate('SignupStep2B');
       }
     } catch (error) {

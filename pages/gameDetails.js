@@ -171,7 +171,6 @@ const handleConfirmPurchase = async () => {
       if (!data || !data.game || !data.users_data) {
         throw new Error("Données invalides reçues");
       }
-
       setGameData(data); // Mettre à jour les données seulement si la requête a réussi
       navigation.setOptions({ title: data.game.name });
       setUserID(data.user_id);
@@ -191,7 +190,7 @@ const handleConfirmPurchase = async () => {
     // Définir un intervalle pour rafraîchir les données toutes les X secondes
     const interval = setInterval(() => {
       fetchData(); // Appeler fetchData pour actualiser les données
-    }, 20000);
+    }, 5000);
 
     // Nettoyer l'intervalle lorsque le composant est démonté
     return () => clearInterval(interval);

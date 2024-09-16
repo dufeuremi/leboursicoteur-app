@@ -60,7 +60,7 @@ export default function WaitingNavigator() {
         headerTintColor: colors.black1,
         headerStyle: {
           backgroundColor: colors.grey1,
-          height: 75,
+          height: 100,
           shadowOpacity: 0, // Retirer l'ombre sur iOS
           elevation: 0, // Retirer l'ombre sur Android
           borderBottomWidth: 0, // Retirer la bordure sur iOS

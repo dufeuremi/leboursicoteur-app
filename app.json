@@ -12,13 +12,15 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.boursicoteur"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.anonymous.boursicoteur"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -27,9 +29,21 @@
       [
         "expo-font",
         {
-          "fonts": ["./assets/Fonts/Shippori Antique B1.ttf"]
+          "fonts": [
+            "node_modules/@expo-google-fonts/inter/Inter_900Black.ttf",
+            "node_modules/@expo-google-fonts/shippori-antique-b1/ShipporiAntiqueB1_400Regular.ttf",
+            "node_modules/@expo-google-fonts/syne/Syne_400Regular.ttf",
+            "node_modules/@expo-google-fonts/syne/Syne_500Medium.ttf",
+            "node_modules/@expo-google-fonts/syne/Syne_600SemiBold.ttf",
+            "node_modules/@expo-google-fonts/syne/Syne_700Bold.ttf"
+          ]
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "606c7b19-4fac-4310-8e6b-160fb0e754c3"
+      }
+    }
   }
 }

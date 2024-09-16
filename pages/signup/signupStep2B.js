@@ -20,7 +20,7 @@ export default function SignupStep2B({ navigation }) {
   useEffect(() => {
     const fetchEmailFromCache = async () => {
       try {
-        const storedEmail = await AsyncStorage.getItem('userEmail');
+        const storedEmail = await AsyncStorage.getItem('tempo-email');
         if (storedEmail) {
           setEmail(storedEmail);
         } else {
