@@ -82,7 +82,7 @@ export default function Game() {
     // Définir un intervalle pour rafraîchir les données toutes les 2 secondes
     const interval = setInterval(() => {
       fetchData(); // Appeler fetchData pour actualiser les données
-    }, 3000);
+    }, 8000);
   
     // Nettoyer l'intervalle lorsque le composant est démonté
     return () => clearInterval(interval);
@@ -170,6 +170,7 @@ const marketData = gameData.users_data[0].wallet.data.map((stock, index) => {
 
   return {
     icon: require("../assets/adaptive-icon.png"),
+    name: stock.name,
     value: `${stock.name} / ${stock.quantity.toFixed(2)}`,
     percentageChange: "↗ 0%", // À ajuster selon la logique de votre application
     amount: `${(stock.quantity * stockPrice).toFixed(2)} €`, // Utiliser le prix réel ici
@@ -298,6 +299,7 @@ const marketData = gameData.users_data[0].wallet.data.map((stock, index) => {
                 percentageChange={market.percentageChange}
                 amount={market.amount}
                 extraInfo={market.extraInfo}
+                name={market.name}
               />
             </TouchableOpacity>
           ))}
@@ -479,6 +481,7 @@ const marketData = gameData.users_data[0].wallet.data.map((stock, index) => {
                   percentageChange={market.percentageChange}
                   amount={market.amount}
                   extraInfo={market.extraInfo}
+                  name={market.name}
                 />
               </TouchableOpacity>
             ))}
@@ -613,6 +616,7 @@ const marketData = gameData.users_data[0].wallet.data.map((stock, index) => {
                   percentageChange={market.percentageChange}
                   amount={market.amount}
                   extraInfo={market.extraInfo}
+                  
                 />
               </TouchableOpacity>
             ))}
