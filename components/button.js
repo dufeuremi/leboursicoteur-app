@@ -4,8 +4,6 @@ import { View, Text, TouchableOpacity, StyleSheet, Vibration } from 'react-nativ
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import colors from '../config-colors'; 
 import configSpacing from '../config-spacing';
-import textStyles from '../config-texts'; 
-import HapticFeedback from "react-native-haptic-feedback";
 
 const Button = ({ type, title, iconName, onPress, disabled }) => {
   const handlePress = () => {
