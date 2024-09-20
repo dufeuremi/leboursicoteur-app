@@ -32,6 +32,7 @@ import configColors from "../config-colors";
 import { LineChart } from "react-native-gifted-charts"; // Import du LineChart
 import { Keyboard } from 'react-native';
 import ClosingInfo from "../components/closingInfo";
+import StockChart from "../components/stock";
 
 export default function Game() {
   const [refreshing, setRefreshing] = useState(false);
@@ -329,28 +330,7 @@ export default function Game() {
     Dont liquidités: {gameData.users_data[0].cash.toFixed(2)} €
   </Text>
  <View style={styles.chartContainer}>
-              <LineChart
-                data={stockChartData}
-                width={220}
-                height={200}
-                color={colors.indigo}
-                isAnimated
-                hideRules
-                initialSpacing={0}
-                rulesType="solid"
-                hideDataPoints
-                hideShadow
-                hideOrigin
-                hideAxesAndRules
-                frontColor={colors.indigo}
-                dataPointsHeight={6}
-                noOfSections={3}
-                decimalPlaces={100}
-                startFillColor={colors.grey1}
-                endFillColor={colors.grey1}
-                thickness={3}
-                curved
-              />
+          <StockChart></StockChart>
             </View>
             <Button
               type="secondary"
@@ -404,6 +384,7 @@ export default function Game() {
             />
           </View>
         </View>
+        
       </View>
       {/* Classement 3*/}
       <BottomSheet
@@ -498,7 +479,7 @@ export default function Game() {
   </Text>
         </View>
       </BottomSheet>
-      {/* Detail action*/}
+      
       <BottomSheet
         ref={marketSheetRef}
         index={-1} // Par défaut, Bottom Sheet est cachée
@@ -521,6 +502,7 @@ export default function Game() {
           >
             {stockID.percentageChange || "0%"}
           </Text>
+          <StockChart></StockChart>
         </View>
       </BottomSheet>
 
@@ -562,6 +544,7 @@ export default function Game() {
               </TouchableOpacity>
             ))}
           </ScrollView>
+          
         </View>
       </BottomSheet>
 
@@ -596,8 +579,9 @@ export default function Game() {
             >
               {stockID.percentageChange || "0%"}
             </Text>
+            
           </View>
-
+          <StockChart></StockChart>
           <Button
             type="primary"
             iconName="logo-euro"
@@ -806,7 +790,7 @@ export default function Game() {
             {selectedStockToSell.percentageChange || "0%"}
           </Text>
         </View>
-
+        <StockChart></StockChart>
         <Button
   type="primary"
   iconName="logo-euro"

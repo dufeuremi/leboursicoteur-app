@@ -6,7 +6,7 @@ import colors from '../config-colors';
 import configSpacing from '../config-spacing';
 
 const ClosingInfo = ({ iconType }) => {
-  const iconName = iconType === 'time' ? 'analytics-outline' : 'moon-outline';
+  const iconName = iconType === 'time' ? 'bar-chart-outline' : 'moon-outline';
   const [message, setMessage] = useState('');
 
   useEffect(() => {
