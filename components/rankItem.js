@@ -6,7 +6,7 @@ import colors from '../config-colors';
 import textStyles from '../config-texts';
 import spacings from '../config-spacing';
 
-const RankItem = ({ user }) => {
+const RankItem = ({ user, percentageChange }) => {
   // Définir la couleur et le symbole en fonction du changement
   const changeColor = user.change >= 0 ? colors.indigo : colors.red;
   const changeSymbol = user.change >= 0 ? "↗" : "↘";

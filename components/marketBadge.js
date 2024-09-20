@@ -48,7 +48,10 @@ const MarketBadge = ({ icon, value, percentageChange, amount, name }) => {
     <View style={styles.container}>
       <Image source={imageMap[name]} style={styles.icon} />
       <View style={styles.textContainer}>
-        <Text style={styles.valueText}>{value}  </Text>
+      <Text style={styles.valueText}>
+  {value}
+</Text>
+
       </View>
       <View style={styles.extraInfoContainer}>
         <Text style={styles.amountText}>{amount} €</Text>
@@ -67,7 +70,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacings.spacing.small,
     paddingVertical: spacings.spacing.small,
     borderRadius: spacings.corner.medium,
-    borderColor: colors.grey3,
+    borderColor: colors.grey5,
     borderWidth: 1,
     marginBottom:  10,
   },
