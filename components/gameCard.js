@@ -23,8 +23,8 @@ const GameCard = ({ game, onPress }) => {
   const statusText = isWaiting
     ? 'En attente'
     : isExpired
-    ? `Expiré le : ${moment(game.finish_at).format('DD/MM/YYYY')}`
-    : timeRemaining;
+    ? 'Expiré'
+    : 'En cours';
 
   const calculateTimeRemaining = (finishAt) => {
     const now = moment();
@@ -50,6 +50,11 @@ const GameCard = ({ game, onPress }) => {
 
   return (
     <TouchableOpacity onPress={onPress} style={styles.container}>
+      <View style={styles.statusContainer}>
+        <Text style={[styles.statusText2, { color: statusColor, borderColor: statusColor }]}>
+          {statusText}
+        </Text>
+      </View>
       <View style={styles.header}>
         <Image 
           source={require('../assets/adaptive-icon.png')}          
@@ -58,25 +63,29 @@ const GameCard = ({ game, onPress }) => {
         <Text style={styles.title}>{game.name}</Text>
       </View>
       <View style={styles.timeAndRatingContainer}>
-        <View style={styles.timeContainer}>
-          <Ionicons name="time-outline" size={18} color={configColors.black2} />
-          <Text style={styles.statusText}>{statusText}</Text>
-        </View>
+        {/* Afficher le timer uniquement si l'état est "En cours" */}
+        {!isWaiting && !isExpired && (
+          <View style={styles.timeContainer}>
+            <Ionicons name="time-outline" size={18} color={configColors.black2} />
+            <Text style={[styles.dynamicStatusText, { color: statusColor }]}>{timeRemaining}</Text>
+          </View>
+        )}
         <View style={styles.ratingContainer}>
           <Ionicons name="person-outline" size={18} color={configColors.black2} /> 
           <Text style={styles.ratingText}>5p</Text>
         </View>
       </View>
-      <View style={styles.footer}>
-      <View style={styles.itemContainer}>
-          <Text style={styles.places}>1er</Text>
-          <Text style={styles.placesText}>↗ 3</Text>
+      {/* Masquer le footer si l'état est "En attente" ou "Expiré" */}
+      { !isWaiting && !isExpired && (
+        <View style={styles.footer}>
+          <View style={styles.itemContainer}>
+            <Text style={styles.places}>1er</Text>
+          </View>
+          <View style={styles.itemContainer}>
+            <Text style={styles.price}>{game.initial_amount.toFixed(2)} €</Text>
+          </View>
         </View>
-        <View style={styles.itemContainer}>
-          <Text style={styles.price}>{game.initial_amount.toFixed(2)} €</Text>
-
-        </View>
-      </View>
+      )}
     </TouchableOpacity>
   );
 };
@@ -89,12 +98,35 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     width: "100%",
     marginBottom: spacings.spacing.small,
-    overflow: "hidden"
+    overflow: "hidden",
+    
+  },
+  statusContainer: {
+    alignItems: 'flex-start', // Align to the start horizontally
+    marginBottom: spacings.spacing.medium,
+    borderRadius: spacings.corner.medium // Increased vertical spacing
+  },
+  statusText: {
+    color: configColors.indigo,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: configColors.indigo,
+    borderRadius: spacings.corner.small, // Ensures rounded corners
+    ...texts.body, // Assuming you have a body text style
+  },
+  statusText2: {
+    color: configColors.indigo,
+    paddingVertical: 3,
+    paddingHorizontal: 5,
+    borderWidth: 1,
+    borderColor: configColors.indigo,
+    borderRadius: spacings.corner.small, // Ensures rounded corners
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacings.spacing.small,
+    marginBottom: spacings.spacing.medium, // Increased vertical spacing
   },
   avatar: {
     width: 40,
@@ -108,14 +140,16 @@ const styles = StyleSheet.create({
   },
   timeAndRatingContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
+    marginBottom: 5,
   },
   timeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginRight: 10
   },
-  statusText: {
+  dynamicStatusText: {
     marginLeft: spacings.lineSpacing.tight,
     ...texts.body,
     color: configColors.black1,
@@ -131,16 +165,16 @@ const styles = StyleSheet.create({
   },
   footer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    marginTop: spacings.spacing.small,
+    marginTop: spacings.spacing.medium, // Increased vertical spacing
   },
   itemContainer: {
     backgroundColor: configColors.grey3,
     paddingVertical: spacings.spacing.small,
     paddingHorizontal: spacings.spacing.medium,
     borderRadius: spacings.corner.small,
-    marginHorizontal: spacings.lineSpacing.tight,
+    marginRight: spacings.lineSpacing.tight, // Use marginRight for horizontal spacing
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

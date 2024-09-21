@@ -33,7 +33,7 @@ const ClosingInfo = ({ iconType }) => {
       if (currentHour >= CLOSING_HOUR) {
         setMessage('La Bourse de Paris est actuellement clôturée. Elle ouvrira demain matin à 9h00.');
       } else if (currentHour < OPENING_HOUR) {
-        setMessage('La Bourse de Paris est fermée. Elle ouvrira ce matin à 9h00.');
+        setMessage('La Bourse de Paris est clôturée. Elle ouvrira ce matin à 9h00.');
       }
     } 
     // Si la Bourse est ouverte
@@ -41,7 +41,7 @@ const ClosingInfo = ({ iconType }) => {
       const hoursUntilClose = CLOSING_HOUR - currentHour - 1; // heures restantes avant 18h
       const minutesUntilClose = 60 - currentMinute; // minutes restantes avant l'heure suivante
 
-      setMessage(`Clôture journalière dans ${hoursUntilClose} heure(s) et ${minutesUntilClose} minute(s), limitant tout transfert.`);
+      setMessage(`Clôture de la bourse de Paris dans ${hoursUntilClose} heure(s) et ${minutesUntilClose} minute(s).`);
     }
   }, []);
 

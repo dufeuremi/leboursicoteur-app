@@ -12,6 +12,7 @@ import {
   ScrollView,
   StyleSheet,
   RefreshControl,
+  BackHandler,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import BottomSheet from "@gorhom/bottom-sheet";
@@ -33,6 +34,8 @@ import { LineChart } from "react-native-gifted-charts"; // Import du LineChart
 import { Keyboard } from 'react-native';
 import ClosingInfo from "../components/closingInfo";
 import StockChart from "../components/stock";
+import StockLogo from "../components/stockLogo";
+import SkeletonLoader from "../components/skeletonLoader";
 
 export default function Game() {
   const [refreshing, setRefreshing] = useState(false);
@@ -53,6 +56,8 @@ export default function Game() {
   const sellPageOneSheetRef = useRef(null);
   const sellPageTwoSheetRef = useRef(null);
   const userEvolution = useRef(null);
+
+  
 
   const generateRandomStockData = () => {
     const data = [];
@@ -119,7 +124,7 @@ export default function Game() {
     // Définir un intervalle pour rafraîchir les données toutes les 8 secondes
     const interval = setInterval(() => {
       fetchData(); // Appeler fetchData pour actualiser les données
-    }, 20000);
+    }, 4000);
 
     // Nettoyer l'intervalle lorsque le composant est démonté
     return () => clearInterval(interval);
@@ -154,20 +159,17 @@ export default function Game() {
 
   if (!gameData) {
     return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: configColors.grey1,
-          translateY: -200,
-        }}
-      >
-        <Image
-          source={require("../assets/adaptive-icon.png")}
-          style={{ width: 50, height: 50 }}
-        />
-      </View>
+      <View         style={{
+        paddingHorizontal: spacings.spacing.medium,
+        backgroundColor: colors.grey1,
+        height: "screen"
+      }}>
+      {/* Exemple d'utilisation d'un skeleton avec un rectangle */}
+      <SkeletonLoader width={300} height={50} borderRadius={spacings.corner.small} />
+      <SkeletonLoader width={320} height={200} borderRadius={spacings.corner.small} />
+      <SkeletonLoader width={300} height={60} borderRadius={spacings.corner.small} />
+      <SkeletonLoader width={320} height={300} borderRadius={spacings.corner.small} />
+    </View>
     );
   }
 
@@ -207,7 +209,6 @@ export default function Game() {
       icon: require("../assets/adaptive-icon.png"),
       name: stock.name,
       value: `${stock.name} / ${stock.quantity.toFixed(2)}`,
-      percentageChange: "↗ 0%", // À ajuster selon la logique de votre application
       amount: `${(stock.quantity * stockPrice).toFixed(2)}`, // Utiliser le prix réel ici
     };
   });
@@ -258,15 +259,7 @@ export default function Game() {
                 style={styles.icon}
               />
               <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
-                {userRankText} / {totalPlayers}
-              </Text>
-              <Text
-                style={[
-                  textStyles.heading2,
-                  { color: colors.indigo, marginLeft: 10, fontSize: 18 },
-                ]}
-              >
-                ↗ 1 place(s)
+                {userRankText} / {totalPlayers} boursicoteurs
               </Text>
             </View>
           </View>
@@ -313,14 +306,6 @@ export default function Game() {
     {calculatePortfolioValue(gameData.users_data[0]).toFixed(2)} €
   </Text>
 
-  <Text
-    style={[
-      textStyles.heading2,
-      { color: colors.indigo, marginLeft: 10, fontSize: 18 },
-    ]}
-  >
-    ↗ 1.2%
-  </Text>
   
 </View>
 <Text style={[textStyles.body, { marginVertical: 5 }]}>
@@ -353,7 +338,6 @@ export default function Game() {
               <MarketBadge
                 icon={market.icon}
                 value={market.value}
-                percentageChange={market.percentageChange}
                 amount={market.amount}
                 extraInfo={market.extraInfo}
                 name={market.name}
@@ -363,9 +347,7 @@ export default function Game() {
         </View>
       </ScrollView>
       <View style={styles.mainContainer}>
-        <ScrollView contentContainerStyle={styles.scrollableContent}>
-          <Text style={styles.textContent}>Votre contenu scrollable ici</Text>
-        </ScrollView>
+
         <View style={styles.fixedButtonContainer}>
           <View style={{ width: "49%" }}>
             <Button
@@ -461,14 +443,7 @@ export default function Game() {
     {calculatePortfolioValue(gameData.users_data[0]).toFixed(2)} €
   </Text>
 
-  <Text
-    style={[
-      textStyles.heading2,
-      { color: colors.indigo, marginLeft: 10, fontSize: 18 },
-    ]}
-  >
-    ↗ 1.2%
-  </Text>
+
   
 </View>
 <Text style={[textStyles.body, { marginVertical: 5 }]}>
@@ -488,20 +463,13 @@ export default function Game() {
         onChange={(index) => handleSheetChanges(index, marketSheetRef)}
       >
         <View style={styles.bottomSheet}>
-          <Text style={[textStyles.body, { color: colors.black2 }]}>
-            {" "}
-            {stockID.name}
-          </Text>
+        <View style={{ flex: 0, flexDirection: 'row', alignItems: 'center' }}>
+  <View style={{marginTop: 20}}><StockLogo name={stockID.name} /></View>
+  <Text style={textStyles.heading1}>{stockID.name} </Text>
+</View>
 
           <Text style={textStyles.heading1}>{stockID.amount} € </Text>
-          <Text
-            style={[
-              textStyles.heading2,
-              { color: colors.indigo, fontSize: 18 },
-            ]}
-          >
-            {stockID.percentageChange || "0%"}
-          </Text>
+
           <StockChart></StockChart>
         </View>
       </BottomSheet>
@@ -520,7 +488,7 @@ export default function Game() {
           >
             <Text style={textStyles.heading1}>Acheter</Text>
             <Text style={[textStyles.body, { color: colors.black2 }]}>
-              Sélectionner une entreprise
+              Sélectionner une position
             </Text>
             <SearchBar placeholder="Rechercher une entreprise..." />
 
@@ -537,8 +505,7 @@ export default function Game() {
                   icon={require("../assets/adaptive-icon.png")} // Remplacez par l'icône appropriée si disponible
                   name={company.name}
                   value={company.name} // Passe la valeur en tant que nombre
-                  percentageChange={company.percentageChange || "0%"} // Affiche le changement en pourcentage, avec une valeur par défaut
-                  amount={`${company.value.toFixed(2)} €`} // Montant à afficher, formaté en euros
+                  amount={company.value.toFixed(2)} // Montant à afficher, formaté en euros
                   extraInfo={company.extraInfo || ""} // Informations supplémentaires, si disponibles
                 />
               </TouchableOpacity>
@@ -557,8 +524,12 @@ export default function Game() {
         onChange={(index) => handleSheetChanges(index, xxxSheetRef)}
       >
         <View style={styles.bottomSheet}>
-          <Text style={textStyles.heading1}>{stockID.name}</Text>
-          <Text style={[textStyles.body, { color: colors.black2 }]}>
+        <View style={{ flex: 0, flexDirection: 'row', alignItems: 'center' }}>
+  <View style={{marginTop: 20}}><StockLogo name={stockID.name} /></View>
+  <Text style={textStyles.heading1}>{stockID.name} </Text>
+</View>
+
+        <Text style={[textStyles.body, { color: colors.black2 }]}>
             Détails de l'action
           </Text>
           <View style={styles.walletContainer}>
@@ -569,16 +540,9 @@ export default function Game() {
               style={styles.icon}
             />
             <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
-              {typeof stockID.value === 'number' ? `${stockID.value.toFixed(2)} €` : "N/A"}
+              {typeof stockID.value === 'number' ? `${stockID.value.toFixed(2)}` : "N/A"}
             </Text>
-            <Text
-              style={[
-                textStyles.heading2,
-                { color: colors.indigo, marginLeft: 10, fontSize: 18 },
-              ]}
-            >
-              {stockID.percentageChange || "0%"}
-            </Text>
+
             
           </View>
           <StockChart></StockChart>
@@ -745,7 +709,6 @@ export default function Game() {
              <MarketBadge
                icon={market.icon}
                value={market.value}
-               percentageChange={market.percentageChange}
                amount={market.amount}
                extraInfo={market.extraInfo}
                name={market.name}
@@ -767,7 +730,10 @@ export default function Game() {
   <View style={styles.bottomSheet}>
     {selectedStockToSell ? ( // Only render if a stock is selected
       <>
-        <Text style={textStyles.heading1}>{selectedStockToSell.name}</Text>
+        <View style={{ flex: 0, flexDirection: 'row', alignItems: 'center' }}>
+  <View style={{marginTop: 20}}><StockLogo name={selectedStockToSell.name} /></View>
+  <Text style={textStyles.heading1}>{selectedStockToSell.name} </Text>
+</View>
         <Text style={[textStyles.body, { color: colors.black2 }]}>
           Évolution depuis l'achat
         </Text>
@@ -781,14 +747,7 @@ export default function Game() {
           <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
             {selectedStockToSell.amount} €
           </Text>
-          <Text
-            style={[
-              textStyles.heading2,
-              { color: colors.indigo, marginLeft: 10, fontSize: 18 },
-            ]}
-          >
-            {selectedStockToSell.percentageChange || "0%"}
-          </Text>
+
         </View>
         <StockChart></StockChart>
         <Button
@@ -916,50 +875,7 @@ Actions détenues
   </View>
 </BottomSheet>
 
-      {/* Portefeuille*/}
-      <BottomSheet
-        ref={userEvolution}
-        index={-1}
-        snapPoints={snapPoints}
-        enablePanDownToClose={true}
-        onChange={(index) => handleSheetChanges(index, userEvolution)}
-      >
-        <View style={styles.bottomSheet}>
-          <Text style={textStyles.heading1}>André Pierre</Text>
-          <Text
-            style={[
-              textStyles.heading2,
-              { color: colors.black2, marginTop: 0 },
-            ]}
-          >
-            29ème
-          </Text>
-          <Text
-            style={[textStyles.body, { color: colors.black2, marginTop: 30 }]}
-          >
-            Valeur du portefeuille
-          </Text>
-          <View style={styles.walletContainer}>
-            <Ionicons
-              name="logo-euro"
-              size={24}
-              color={colors.black1}
-              style={styles.icon}
-            />
-            <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
-              18290,82
-            </Text>
-            <Text
-              style={[
-                textStyles.heading2,
-                { color: colors.indigo, marginLeft: 10, fontSize: 18 },
-              ]}
-            >
-              ↗ 1.2%
-            </Text>
-          </View>
-        </View>
-      </BottomSheet>
+   
     </View>
   );
 }

@@ -1,35 +1,12 @@
 // Import necessary packages and configuration
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, Button, StyleSheet, Image } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import colors from '../config-colors';
 import textStyles from '../config-texts';
 import spacings from '../config-spacing';
 
-const MarketBadge = ({ icon, value, percentageChange, amount, name }) => {
-  // État pour le taux de variation
-  const [variationRate, setVariationRate] = useState(0);
-  const [variationRateAbs, setVariationRateAbs] = useState(0);
-
-  // Référence pour stocker la valeur précédente de 'amount'
-  const previousAmountRef = useRef(amount);
-
-  useEffect(() => {
-    const previousAmount = previousAmountRef.current;
-
-    // Calculer le taux de variation
-    if (previousAmount !== 0) { // Éviter la division par zéro
-      const variation = ((amount - previousAmount) / previousAmount) * 100;
-      setVariationRate(variation.toFixed(2)); // Limiter à 2 décimales
-      setVariationRateAbs(Math.abs(variation).toFixed(2)); // Valeur absolue
-    } else {
-      setVariationRate(0);
-      setVariationRateAbs(0);
-    }
-
-    // Mettre à jour la valeur précédente
-    previousAmountRef.current = amount;
-  }, [amount]);
-
+// Define the component with props
+const StockLogo = ({ name }) => {
   const imageMap = {
     'AC': require('../assets/Logos/AC.png'),
     'AI': require('../assets/Logos/AI.png'),
@@ -67,23 +44,9 @@ const MarketBadge = ({ icon, value, percentageChange, amount, name }) => {
     'VIV': require('../assets/Logos/VIV.png'),
   };
 
-  // Déterminez la couleur et l'icône de variation en fonction de la valeur
-  const isPositive = parseFloat(variationRate) >= 0;
-  const variationColor = isPositive ? colors.indigo : colors.red;
-  const variationIcon = isPositive ? '↗' : '↘';
-
   return (
     <View style={styles.container}>
-      <Image source={imageMap[name] || require('../assets/avatar.png')} style={styles.icon} />
-      <View style={styles.textContainer}>
-        <Text style={styles.valueText}>{value}</Text>
-      </View>
-      <View style={styles.extraInfoContainer}>
-        <Text style={styles.amountText}>{amount} €</Text>
-        <Text style={[styles.percentageChange, { color: variationColor }]}>
-          {variationIcon} {variationRateAbs}%
-        </Text>
-      </View>
+      <Image source={imageMap[name]} style={styles.icon} />
     </View>
   );
 };
@@ -91,22 +54,13 @@ const MarketBadge = ({ icon, value, percentageChange, amount, name }) => {
 // Define the styles
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-    paddingHorizontal: spacings.spacing.small,
-    paddingVertical: spacings.spacing.small,
-    borderRadius: spacings.corner.medium,
-    borderColor: colors.grey5,
-    borderWidth: 1,
-    marginBottom: 10,
+
   },
   icon: {
     width: 35, // Adjust the size as needed
     height: 35, // Adjust the size as needed
     marginRight: spacings.spacing.small,
-    borderRadius: 5,
-    resizeMode: 'contain', // Ensure the image fits well
+    borderRadius: 7,
   },
   textContainer: {
     flex: 1,
@@ -118,13 +72,8 @@ const styles = StyleSheet.create({
     color: colors.black1,
   },
   percentageChange: {
+    color: colors.red, // Assuming red color for negative change
     fontSize: 12,
-    marginTop: 2,
-  },
-  variationRate: {
-    fontSize: 12,
-    marginTop: 2,
-    fontWeight: '500',
   },
   extraInfoContainer: {
     alignItems: 'flex-end',
@@ -139,4 +88,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MarketBadge;
+export default StockLogo;

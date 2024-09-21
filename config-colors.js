@@ -1,7 +1,7 @@
 export default {
     indigo: "#2F2BFF",
     red: "#FF007A",
-    green: "#23DD4C",
+    green: "#72C900",
     grey1:"#F4F7FB",
     grey2:"#EBF0FA",
     grey3:"#DAE2F1",

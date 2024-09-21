@@ -1,34 +1,32 @@
-
-
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native'; 
 import colors from '../config-colors'; 
 import spacings from '../config-spacing';
-import GameCard from '../components/gameCard';  // Assurez-vous que le chemin est correct
+import GameCard from '../components/gameCard';  
 import texts from '../config-texts';
 import moment from 'moment';
-import AsyncStorage from '@react-native-async-storage/async-storage';  // Importer AsyncStorage
+import AsyncStorage from '@react-native-async-storage/async-storage';  
+import SkeletonLoader from '../components/skeletonLoader'; 
+import Button from '../components/button';
+import axios from 'axios';
 
 const API_URL = 'https://xmpt-xa8m-h6ai.n7c.xano.io/api:RMY1IHfK/game/list';
 
 function FondsScreen() {
   const navigation = useNavigation();
-  const [gamesWaiting, setGamesWaiting] = useState([]);
-  const [gamesInProgress, setGamesInProgress] = useState([]);
-  const [gamesExpired, setGamesExpired] = useState([]);
+  const [games, setGames] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true); // Ajouter un état pour le chargement
 
   const handleGamePress = async (game) => {
     try {
-      // Sauvegarder l'ID du jeu sélectionné dans AsyncStorage en le convertissant en chaîne de caractères
       await AsyncStorage.setItem("selected_game_id", game.id.toString());
-  
       console.log("Game ID saved successfully:", game.id);
     } catch (error) {
       console.error("Failed to save the game ID:", error);
     }
-  
+
     if (game.isWaiting) {
       navigation.navigate('WaitingRoom');  // Redirige vers WaitingRoom si en attente
     } else {
@@ -37,6 +35,7 @@ function FondsScreen() {
   };
 
   const fetchData = async () => {
+    setLoading(true); // Commencer le chargement
     try {
       const userToken = await AsyncStorage.getItem('userToken');
       if (!userToken) {
@@ -55,9 +54,7 @@ function FondsScreen() {
       const data = await response.json();
   
       const now = moment();
-      const waiting = [];
-      const inProgress = [];
-      const expired = [];
+      const allGames = [];
       console.log(data);
   
       // Parcourir le tableau `games` dans la réponse
@@ -65,28 +62,19 @@ function FondsScreen() {
         const game = gameArray.length > 0 ? gameArray[0] : null;  // Vérifier si gameArray[0] existe
   
         if (game) {
-          const finishAt = moment(game.finish_at);
-          if (game.isWaiting) {
-            waiting.push(game);
-          } else if (finishAt.isBefore(now)) {
-            expired.push(game);
-          } else {
-            inProgress.push(game);
-          }
+          allGames.push(game);
         } else {
           console.error('gameArray est vide ou undefined:', gameArray);
         }
       });
   
-      setGamesWaiting(waiting);
-      setGamesInProgress(inProgress);
-      setGamesExpired(expired);
+      setGames(allGames);
     } catch (error) {
       console.error('Erreur lors de la récupération des données :', error);
+    } finally {
+      setLoading(false); // Arrêter le chargement après la récupération des données
     }
   };
-  
-  
 
   useEffect(() => {
     fetchData();
@@ -97,45 +85,79 @@ function FondsScreen() {
     fetchData().finally(() => setRefreshing(false));
   }, []);
 
+
+  // Fonction pour gérer la connexion à un fond ou la création d'un fond
+  const handlePress = async (targetScreen) => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      console.log(token);
+      if (!token) {
+        navigation.navigate('Signup');
+        return;
+      }
+      const response = await axios.get("https://xmpt-xa8m-h6ai.n7c.xano.io/api:RMY1IHfK/auth/get", {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': token
+        },
+      });
+      if (response.status == 200) {
+        navigation.navigate(targetScreen); // Naviguer vers l'écran cible
+      } else {
+        navigation.navigate("home"); // Naviguer vers l'écran cible
+      }
+    } catch (error) {
+      console.error('Erreur lors de la requête GET', error);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <ScrollView 
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        <View style={styles.subContainer}>
-          {/* Fonds en attente */}
-          <Text style={texts.heading1}>Fonds en attente</Text>
-          {gamesWaiting.length > 0 ? (
-            gamesWaiting.map((game) => (
-              <GameCard key={game.id} game={game} onPress={() => handleGamePress(game)} />
-            ))
-          ) : (
-            <Text style={texts.body}>Aucun fond en attente.</Text>
-          )}
-
-          {/* Fonds en cours */}
-          <Text style={texts.heading1}>Fonds en cours</Text>
-          {gamesInProgress.length > 0 ? (
-            gamesInProgress.map((game) => (
-              <GameCard key={game.id} game={game} onPress={() => handleGamePress(game)} />
-            ))
-          ) : (
-            <Text style={texts.body}>Aucun fond en cours.</Text>
-          )}
-
-          {/* Fonds expirés */}
-          <Text style={texts.heading1}>Fonds expirés</Text>
-          {gamesExpired.length > 0 ? (
-            gamesExpired.map((game) => (
-              <GameCard key={game.id} game={game} onPress={() => handleGamePress(game)} />
-            ))
-          ) : (
-            <Text style={texts.body}>Aucun fond expiré.</Text>
-          )}
+      {loading ? (  // Afficher SkeletonLoader pendant le chargement
+        <View style={styles.loaderContainer}>
+          <SkeletonLoader width={310} height={50} borderRadius={16} />
+          <SkeletonLoader width={310} height={200} borderRadius={16} />
+          <SkeletonLoader width={310} height={200} borderRadius={16} />
+          <SkeletonLoader width={310} height={200} borderRadius={16} />
         </View>
-      </ScrollView>
+      ) : ( 
+        <ScrollView 
+          contentContainerStyle={styles.scrollViewContent} // Ajout du padding pour éviter le chevauchement
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          <View style={styles.subContainer}>
+            {games.length > 0 ? (
+              games.map((game) => (
+                <GameCard key={game.id} game={game} onPress={() => handleGamePress(game)} />
+              ))
+            ) : (
+              <Text style={texts.body}>Aucun fond disponible.</Text>
+            )}
+          </View>
+        </ScrollView>
+      )}
+
+      <View style={styles.fixedButtonContainer}>
+        <View style={styles.buttonWrapper}>
+          <Button
+            type="primary"
+            title="Rejoindre"
+            iconName="enter-outline"
+            onPress={() => handlePress('JoinGame')}
+          />
+        </View>
+        <View style={styles.buttonWrapper}>
+          <Button
+            type="secondary"
+            title="Créer"
+            iconName="trending-up-outline"
+            onPress={() => handlePress('CreateGame')}
+          />
+        </View>
+      </View>
     </View>
   );
 }
@@ -144,10 +166,36 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.grey1,
+    position: 'relative', // Assure que les éléments absolus sont positionnés par rapport à ce conteneur
   },
   subContainer: {
     flex: 1,
     margin: spacings.spacing.medium
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacings.spacing.large
+  },
+  scrollViewContent: {
+    paddingBottom: 100, // Ajoute un padding en bas pour éviter que le contenu ne soit masqué par les boutons
+  },
+  fixedButtonContainer: {
+    position: 'absolute', // Positionnement absolu
+    bottom: 20, // Distance du bas de l'écran
+    left: spacings.spacing.medium, // Distance du côté gauche
+    right: spacings.spacing.medium, // Distance du côté droit
+    flexDirection: 'row', // Aligne les enfants horizontalement
+    justifyContent: 'space-between', // Espace entre les boutons
+    // Ajoutez une ombre ou un fond si nécessaire pour améliorer la visibilité
+    // backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    // padding: spacings.spacing.small,
+    // borderRadius: 10,
+  },
+  buttonWrapper: {
+    flex: 1,
+    marginHorizontal: 5, // Ajoute un petit espace entre les boutons
   },
 });
 

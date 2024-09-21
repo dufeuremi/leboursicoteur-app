@@ -13,7 +13,7 @@ const UserProfileCard = ({full_name, email}) => {
     <View style={styles.container}>
       <View style={styles.profile}>
         <Image 
-        source={require('../assets/adaptive-icon.png')}          
+        source={require('../assets/avatar.png')}          
         style={styles.avatar}
         />
         <View style={styles.details}>
@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 70,
     height: 70,
-    borderRadius: spacings.corner.meidm,
+    borderRadius: spacings.corner.small,
     marginRight: spacings.spacing.small,
 
   },

@@ -7,7 +7,6 @@ import configSpacing from '../config-spacing';
 
 const Button = ({ type, title, iconName, onPress, disabled }) => {
   const handlePress = () => {
-
     onPress && onPress(); // Appelle la fonction onPress passée en props
   };
 
@@ -45,6 +44,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 10,
+    // Ombre pour iOS
+    shadowColor: colors.indigo,
+    shadowOffset: {
+      width: 0,
+      height: 20,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 13,
+    // Ombre pour Android
+    elevation: 10,
   },
   secondaryButton: {
     backgroundColor: colors.grey3,
@@ -54,6 +63,16 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
+    // Ombre pour iOS
+    shadowColor: colors.black2,
+    shadowOffset: {
+      width: 0,
+      height: 20,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 13,
+    // Ombre pour Android
+    elevation: 10,
   },
   primaryButtonText: {
     color: colors.grey1,
