@@ -17,7 +17,7 @@ export default function createGameStep2({ navigation }) {
     try {
       await AsyncStorage.setItem('game_name', gameName); // Stocker le nom du jeu
       console.log('Nom du jeu sauvegardé avec succès');
-      navigation.navigate('createGameStep3'); // Naviguer vers l'étape suivante
+      navigation.navigate('CreateGameStep3'); // Naviguer vers l'étape suivante
     } catch (e) {
       console.error('Erreur lors de la sauvegarde du nom du jeu', e);
     }

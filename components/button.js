@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     shadowColor: colors.indigo,
     shadowOffset: {
       width: 0,
-      height: 20,
+      height: 12,
     },
     shadowOpacity: 0.1,
     shadowRadius: 13,
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     shadowColor: colors.black2,
     shadowOffset: {
       width: 0,
-      height: 20,
+      height: 12,
     },
     shadowOpacity: 0.1,
     shadowRadius: 13,

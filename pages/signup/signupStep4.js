@@ -81,7 +81,7 @@ export default function SignupStep4({ navigation }) {
 
       if (response.ok) {
         await AsyncStorage.setItem('userToken', result.token); // Stocker le token
-        navigation.navigate('Home'); // Rediriger vers la page d'accueil
+        navigation.navigate('Fonds'); // Rediriger vers la page d'accueil
       } else {
         Alert.alert('Erreur', 'Une erreur est survenue. Veuillez réessayer.');
       }

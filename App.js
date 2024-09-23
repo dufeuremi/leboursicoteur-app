@@ -47,7 +47,7 @@ export default function App() {
             name="Fonds" 
             component={FondsScreen} 
             options={({ navigation }) => ({
-              title: "Fonds d'investissement",
+              title: "    Fonds d'investissement",
               headerShown: true,
               headerRight: () => (
                 <TouchableOpacity

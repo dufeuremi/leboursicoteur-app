@@ -40,7 +40,7 @@ export default function JoinGameScreen({ navigation }) {
             const data = await response.json();
   
             if (response.ok) {
-                navigation.navigate('WaitingRoom');
+                navigation.navigate('Game');
             } else {
                 Alert.alert('Erreur', 'Code pin invalide');
             }

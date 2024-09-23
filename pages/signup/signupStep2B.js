@@ -81,7 +81,7 @@ export default function SignupStep2B({ navigation }) {
       await AsyncStorage.setItem('userToken', token);
   
       // Redirection vers la page d'accueil
-      navigation.navigate('Home');
+      navigation.navigate('Fonds');
       
     } catch (error) {
       // Vérification des erreurs de réponse

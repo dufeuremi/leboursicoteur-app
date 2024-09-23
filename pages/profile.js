@@ -1,7 +1,6 @@
-// SettingsScreen.js
 import React, { useRef, useMemo, useCallback, useEffect, useState, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { Ionicons } from '@expo/vector-icons'; // Utilisation des icônes d'Expo
 import colors from '../config-colors';
 import spacings from '../config-spacing';
 import ProfileCard from '../components/profileCard';
@@ -11,6 +10,7 @@ import { useNavigation } from '@react-navigation/native';
 import Button from '../components/button';
 import BottomSheet from '@gorhom/bottom-sheet';
 import CustomInput from '../components/input';
+import SkeletonLoader from '../components/skeletonLoader'; // Importation du SkeletonLoader
 
 function SettingsScreen() {
   const navigation = useNavigation();
@@ -22,6 +22,8 @@ function SettingsScreen() {
     lastname: '',
     email: '',
   });
+  
+  const [loading, setLoading] = useState(true); // Ajout de l'état de chargement
 
   // Fonction pour récupérer les informations de l'utilisateur
   const fetchUserData = async () => {
@@ -48,6 +50,8 @@ function SettingsScreen() {
     } catch (error) {
       console.error('Erreur lors de la récupération des données utilisateur :', error);
       Alert.alert('Erreur', 'Impossible de récupérer les informations utilisateur.');
+    } finally {
+      setLoading(false); // Fin du chargement
     }
   };
 
@@ -59,14 +63,11 @@ function SettingsScreen() {
   // Fonction pour gérer la déconnexion
   const handleSignOut = async () => {
     try {
-      // Suppression du token utilisateur
       await AsyncStorage.removeItem('userToken');
-
-      // Affichage de l'alerte de succès
       Alert.alert('Succès', 'Vous êtes déconnecté avec succès.', [
         {
           text: 'OK',
-          onPress: () => navigation.navigate('Fonds'), // Redirection vers l'écran Fonds
+          onPress: () => navigation.navigate('Fonds'),
         },
       ]);
     } catch (error) {
@@ -88,7 +89,7 @@ function SettingsScreen() {
   }, []);
 
   // Points d'arrêt pour le BottomSheet
-  const snapPoints = useMemo(() => ['70%', '70%'], []);
+  const snapPoints = useMemo(() => ['70%'], []);
 
   // Fonction pour gérer l'enregistrement des modifications
   const handleSave = async () => {
@@ -115,13 +116,8 @@ function SettingsScreen() {
         throw new Error(errorData.message || 'Erreur lors de la mise à jour du profil');
       }
 
-      // Fermer le BottomSheet
       bottomSheetRef.current?.close();
-
-      // Réactualiser les données utilisateur
       fetchUserData();
-
-      // Afficher un message de succès
       Alert.alert('Succès', 'Votre profil a été mis à jour avec succès.');
     } catch (error) {
       console.error('Erreur lors de la mise à jour du profil :', error);
@@ -147,7 +143,7 @@ function SettingsScreen() {
           accessibilityLabel="Déconnexion"
           accessible
         >
-          <Icon name="exit-outline" size={24} color={colors.black1} />
+          <Ionicons name="exit-outline" size={24} color={colors.black1} />
         </TouchableOpacity>
       ),
     });
@@ -155,66 +151,74 @@ function SettingsScreen() {
 
   return (
     <View style={styles.container}>
-      <ProfileCard 
-        full_name={`${user.firstname} ${user.lastname}`} 
-        email={user.email} 
-      />
-      
-      <Button 
-        type="secondary" 
-        title="Modifier" 
-        iconName="create-outline" 
-        onPress={handleOpenBottomSheet} // Gestionnaire d'événement pour ouvrir le BottomSheet
-      />
-
-      {/* Ajout du BottomSheet */}
-      <BottomSheet
-        ref={bottomSheetRef}
-        index={-1} // Initialement caché
-        snapPoints={snapPoints}
-        onChange={(index) => handleSheetChanges(index)} // Gestionnaire d'événement pour les changements d'index
-        enablePanDownToClose={true} // Permettre à l'utilisateur de fermer le BottomSheet en glissant vers le bas
-      >
-        <View style={styles.sheetContent}>
-          <Text style={texts.heading2}>Modifier le profil</Text>
-          
-          {/* Conteneur pour les champs prénom et nom côte à côte */}
-          <View style={styles.nameContainer}>
-            <View style={styles.inputWrapper}>
-              <CustomInput 
-                placeholder="Prénom" 
-                keyboard="default" 
-                capitalize="true" 
-                value={user.firstname} // Valeur du prénom
-                onChangeText={(text) => handleChange('firstname', text)} // Gestionnaire de changement
-              />
-            </View>
-            <View style={styles.inputWrapper}>
-              <CustomInput 
-                placeholder="Nom" 
-                keyboard="default" 
-                capitalize="true" 
-                value={user.lastname} // Valeur du nom
-                onChangeText={(text) => handleChange('lastname', text)} // Gestionnaire de changement
-              />
-            </View>
-          </View>
-          <CustomInput 
-            placeholder="Email" 
-            keyboard="email-address" 
-            capitalize="false" 
-            value={user.email} // Valeur de l'email
-            onChangeText={(text) => handleChange('email', text)} // Gestionnaire de changement
-          />
-
-          <Button 
-            type="primary" 
-            title="Enregistrer" 
-            iconName="arrow-up-outline" 
-            onPress={handleSave} // Appel de la fonction d'enregistrement
-          />
+      {loading ? ( // Afficher SkeletonLoader si les données sont en cours de chargement
+        <View >
+          <SkeletonLoader width={320} height={120} borderRadius={16} />
+          <SkeletonLoader width={320} height={40} borderRadius={16} />
         </View>
-      </BottomSheet>
+      ) : (
+        <>
+          <ProfileCard 
+            full_name={`${user.firstname} ${user.lastname}`} 
+            email={user.email} 
+          />
+          
+          <Button 
+            type="secondary" 
+            title="Modifier" 
+            iconName="create-outline" 
+            onPress={handleOpenBottomSheet} // Gestionnaire d'événement pour ouvrir le BottomSheet
+          />
+
+          {/* Ajout du BottomSheet */}
+          <BottomSheet
+            ref={bottomSheetRef}
+            index={-1} // Initialement caché
+            snapPoints={snapPoints}
+            onChange={(index) => handleSheetChanges(index)} // Gestionnaire d'événement pour les changements d'index
+            enablePanDownToClose={true} // Permettre à l'utilisateur de fermer le BottomSheet en glissant vers le bas
+          >
+            <View style={styles.sheetContent}>
+              <Text style={texts.heading2}>Modifier le profil</Text>
+              
+              <View style={styles.nameContainer}>
+                <View style={styles.inputWrapper}>
+                  <CustomInput 
+                    placeholder="Prénom" 
+                    keyboard="default" 
+                    capitalize="true" 
+                    value={user.firstname} // Valeur du prénom
+                    onChangeText={(text) => handleChange('firstname', text)} // Gestionnaire de changement
+                  />
+                </View>
+                <View style={styles.inputWrapper}>
+                  <CustomInput 
+                    placeholder="Nom" 
+                    keyboard="default" 
+                    capitalize="true" 
+                    value={user.lastname} // Valeur du nom
+                    onChangeText={(text) => handleChange('lastname', text)} // Gestionnaire de changement
+                  />
+                </View>
+              </View>
+              <CustomInput 
+                placeholder="Email" 
+                keyboard="email-address" 
+                capitalize="false" 
+                value={user.email} // Valeur de l'email
+                onChangeText={(text) => handleChange('email', text)} // Gestionnaire de changement
+              />
+
+              <Button 
+                type="primary" 
+                title="Enregistrer" 
+                iconName="arrow-up-outline" 
+                onPress={handleSave} // Appel de la fonction d'enregistrement
+              />
+            </View>
+          </BottomSheet>
+        </>
+      )}
     </View>
   );
 }
@@ -227,6 +231,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.grey1,
     paddingLeft: spacings.externalMargin.x,
     paddingRight: spacings.externalMargin.x,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacings.spacing.large,
   },
   sheetContent: {
     flex: 1,
@@ -242,7 +252,7 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flex: 1,
     width: '100%',
-    marginRight: "2%",
+    marginRight: '2%',
   },
 });
 

@@ -19,7 +19,7 @@ export default function createGameStep1({ navigation }) {
                 type="primary" 
                 title="D’une partie entre amis" 
                 iconName="people-outline" 
-                onPress={() => navigation.navigate('createGameStep2')}
+                onPress={() => navigation.navigate('CreateGameStep2')}
             />
             <Button 
                 type="secondary" 

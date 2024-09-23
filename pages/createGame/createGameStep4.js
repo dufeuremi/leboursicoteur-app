@@ -14,7 +14,7 @@ export default function createGameStep4({ navigation }) {
     try {
       await AsyncStorage.setItem('team_size', teamSize.toString()); // Stocker le nombre de joueurs
       console.log('Taille de l\'équipe sauvegardée avec succès');
-      navigation.navigate('createGameStep5'); // Naviguer vers l'étape suivante
+      navigation.navigate('CreateGameStep5'); // Naviguer vers l'étape suivante
     } catch (e) {
       console.error('Erreur lors de la sauvegarde de la taille de l\'équipe', e);
     }

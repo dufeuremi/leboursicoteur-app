@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native'; 
 import colors from '../config-colors'; 
 import spacings from '../config-spacing';
@@ -134,7 +134,33 @@ function FondsScreen() {
                 <GameCard key={game.id} game={game} onPress={() => handleGamePress(game)} />
               ))
             ) : (
-              <Text style={texts.body}>Aucun fond disponible.</Text>
+<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+  <Image
+    source={require('../assets/wallet.png')}
+    style={{
+      width: 120,
+      height: 120,
+      shadowColor: colors.indigo,
+      marginTop: spacings.spacing.huge
+    }}
+  />
+  <Text
+    style={[
+      texts.body,
+      {
+        textAlign: 'center',
+        fontSize: 15,
+        marginBottom: 20,
+        marginHorizontal: spacings.spacing.large,
+        marginTop: spacings.spacing.medium,
+      },
+    ]}
+  >
+    Commencez par créer ou rejoindre un fond.
+  </Text>
+</View>
+
+
             )}
           </View>
         </ScrollView>

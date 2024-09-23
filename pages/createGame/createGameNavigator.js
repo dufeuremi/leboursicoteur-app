@@ -36,11 +36,11 @@ export default function CreateGameScreens() {
         },
       })}
     >
-      <Stack.Screen name="createGameStep1" component={SignupStep1} options={{ title: 'Créer un fond' }} />
-      <Stack.Screen name="createGameStep2" component={SignupStep2} options={{ title: 'Créer un fond' }} />
-      <Stack.Screen name="createGameStep3" component={SignupStep3} options={{ title: 'Créer un fond' }} />
-      <Stack.Screen name="createGameStep4" component={SignupStep4} options={{ title: 'Créer un fond' }} />
-      <Stack.Screen name="createGameStep5" component={SignupStep5} options={{ title: 'Créer un fond' }} />
+      <Stack.Screen name="CreateGameStep1" component={SignupStep1} options={{ title: 'Créer un fond' }} />
+      <Stack.Screen name="CreateGameStep2" component={SignupStep2} options={{ title: 'Créer un fond' }} />
+      <Stack.Screen name="CreateGameStep3" component={SignupStep3} options={{ title: 'Créer un fond' }} />
+      <Stack.Screen name="CreateGameStep4" component={SignupStep4} options={{ title: 'Créer un fond' }} />
+      <Stack.Screen name="CreateGameStep5" component={SignupStep5} options={{ title: 'Créer un fond' }} />
 
     </Stack.Navigator>
 

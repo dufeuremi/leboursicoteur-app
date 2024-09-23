@@ -18,7 +18,7 @@ export default function createGameStep3({ navigation }) {
     try {
       await AsyncStorage.setItem('game_capital', gameCapital); // Stocker le capital du jeu
       
-      navigation.navigate('createGameStep5'); // Naviguer vers l'étape suivante
+      navigation.navigate('CreateGameStep5'); // Naviguer vers l'étape suivante
     } catch (e) {
       console.error('GAME CAPITAL Erreur lors de la sauvegarde du capital du jeu', e);
     }

@@ -15,6 +15,7 @@ function WaitingRoom() {
   const navigation = useNavigation(); 
   const [refreshing, setRefreshing] = useState(false);
   const [userData, setUserData] = useState([]);
+  const [gameData, setGameData] = useState([]);
   const [isOwner, setIsOwner] = useState(false);
 
   const API_URL = 'https://xmpt-xa8m-h6ai.n7c.xano.io/api:RMY1IHfK/game/get';
@@ -47,6 +48,7 @@ function WaitingRoom() {
       });
       const data = await response.json();
       setUserData(data.users);
+      setGameData(data.game);
       setIsOwner(data.owner); 
       setRefreshing(false);
     } catch (error) {
@@ -102,7 +104,8 @@ function WaitingRoom() {
         <InfoBanner text="Le fond d'investissement sera lancé par le boursicoteur hôte." />
         <View style={{ marginBottom: configSpacing.spacing.medium }} />
         <Text style={textStyles.heading2}>{userData.length} joueurs</Text>
-        
+
+
         {userData.map((user, index) => (
           <ListItem 
             key={index} 
@@ -123,6 +126,8 @@ function WaitingRoom() {
             style={styles.button}
           />
         )}
+                <Text style={textStyles.heading1}>PIN: {gameData.pin}</Text>
+
       </ScrollView>
     </View>
   );

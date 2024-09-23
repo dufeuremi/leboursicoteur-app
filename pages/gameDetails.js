@@ -13,11 +13,13 @@ import {
   StyleSheet,
   RefreshControl,
   BackHandler,
+  Keyboard,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import BottomSheet from "@gorhom/bottom-sheet";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import textStyles from "../config-texts";
+import configSpacing from "../config-spacing";
 import spacings from "../config-spacing";
 import colors from "../config-colors";
 import Button from "../components/button";
@@ -27,11 +29,8 @@ import MarketBadge from "../components/marketBadge";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import SearchBar from "../components/searchInput";
-import configSpacing from "../config-spacing";
 import AmountInput from "../components/amountInput";
-import configColors from "../config-colors";
-import { LineChart } from "react-native-gifted-charts"; // Import du LineChart
-import { Keyboard } from 'react-native';
+import { LineChart } from "react-native-gifted-charts";
 import ClosingInfo from "../components/closingInfo";
 import StockChart from "../components/stock";
 import StockLogo from "../components/stockLogo";
@@ -42,9 +41,11 @@ export default function Game() {
   const [gameData, setGameData] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [stockID, setStockID] = useState("");
-  const [sellAmount, setSellAmount] = useState(0); // Track the amount in euros to sell
-  const [selectedStockToSell, setSelectedStockToSell] = useState(null); // Track selected stock for selling
-  const [totalInvestment, setTotalInvestment] = useState(0); // Track total euros input by the user
+  const [sellAmount, setSellAmount] = useState(0);
+  const [selectedStockToSell, setSelectedStockToSell] = useState(null);
+  const [totalInvestment, setTotalInvestment] = useState(0);
+  const [reloading, setReloading] = useState(0);
+
 
   const bottomSheetRef = useRef(null);
   const situationSheetRef = useRef(null);
@@ -55,9 +56,6 @@ export default function Game() {
   const yyySheetRef = useRef(null);
   const sellPageOneSheetRef = useRef(null);
   const sellPageTwoSheetRef = useRef(null);
-  const userEvolution = useRef(null);
-
-  
 
   const generateRandomStockData = () => {
     const data = [];
@@ -66,7 +64,7 @@ export default function Game() {
       const date = new Date(now);
       date.setDate(now.getDate() - (29 - i));
       data.push({
-        value: Math.floor(Math.random() * 1000) + 500, // Valeur aléatoire entre 500 et 1500
+        value: Math.floor(Math.random() * 1000) + 500,
         label: `${date.getDate()}/${date.getMonth() + 1}`,
       });
     }
@@ -74,7 +72,6 @@ export default function Game() {
   };
 
   const stockChartData = useMemo(() => generateRandomStockData(), []);
-
 
   const navigation = useNavigation();
   const API_URL = "https://xmpt-xa8m-h6ai.n7c.xano.io/api:RMY1IHfK/game/get";
@@ -103,9 +100,10 @@ export default function Game() {
 
       const data = await response.json();
       setGameData(data);
-      navigation.setOptions({ title: data.game.name });
+      if (data?.game?.name) {
+        navigation.setOptions({ title: data.game.name });
+      }
       setRefreshing(false);
-      
     } catch (error) {
       console.error("Erreur lors de la récupération des données :", error);
       setRefreshing(false);
@@ -121,17 +119,15 @@ export default function Game() {
   }, []);
 
   useEffect(() => {
-    // Définir un intervalle pour rafraîchir les données toutes les 8 secondes
     const interval = setInterval(() => {
-      fetchData(); // Appeler fetchData pour actualiser les données
-    }, 4000);
+      fetchData();
+    }, 5000);
 
-    // Nettoyer l'intervalle lorsque le composant est démonté
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    if (gameData) {
+    if (gameData?.game?.finish_at) {
       const interval = setInterval(() => {
         const now = Date.now();
         const timeLeft = gameData.game.finish_at - now;
@@ -143,6 +139,7 @@ export default function Game() {
   }, [gameData]);
 
   const formatTime = (ms) => {
+    if (!ms) return 'N/A';
     const totalSeconds = Math.floor(ms / 1000);
     const days = Math.floor(totalSeconds / (3600 * 24));
     const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
@@ -157,60 +154,84 @@ export default function Game() {
     }
   }, []);
 
-  if (!gameData) {
+  if (!gameData || reloading == true ) {
     return (
-      <View         style={{
-        paddingHorizontal: spacings.spacing.medium,
-        backgroundColor: colors.grey1,
-        height: "screen"
-      }}>
-      {/* Exemple d'utilisation d'un skeleton avec un rectangle */}
-      <SkeletonLoader width={300} height={50} borderRadius={spacings.corner.small} />
-      <SkeletonLoader width={320} height={200} borderRadius={spacings.corner.small} />
-      <SkeletonLoader width={300} height={60} borderRadius={spacings.corner.small} />
-      <SkeletonLoader width={320} height={300} borderRadius={spacings.corner.small} />
-    </View>
+      <View
+        style={{
+          paddingHorizontal: spacings.spacing.medium,
+          backgroundColor: colors.grey1,
+          height: "screen",
+        }}
+      >
+        <SkeletonLoader
+          width={300}
+          height={50}
+          borderRadius={spacings.corner.small}
+        />
+        <SkeletonLoader
+          width={320}
+          height={200}
+          borderRadius={spacings.corner.small}
+        />
+        <SkeletonLoader
+          width={300}
+          height={60}
+          borderRadius={spacings.corner.small}
+        />
+        <SkeletonLoader
+          width={320}
+          height={300}
+          borderRadius={spacings.corner.small}
+        />
+      </View>
     );
   }
 
   const calculatePortfolioValue = (userData) => {
-    const cash = userData.cash;
-    const stockValue = userData.wallet.data.reduce((acc, stock) => {
-      // Trouver la valeur actuelle de l'action
-      const currentStock = gameData.stock.find((s) => s.name === stock.name);
-      const stockPrice = currentStock ? currentStock.value : 0; // Utiliser 0 si la valeur n'est pas trouvée
-      return acc + stock.quantity * stockPrice;
-    }, 0);
+    if (!userData) {
+      console.error("userData est null ou undefined");
+      return 0;
+    }
+  
+    const cash = userData.cash || 0;
+    const userGameUserId = userData.id;
+    if (!userGameUserId) {
+      console.error("userGameUserId est null ou undefined");
+      return 0;
+    }
+  
+    const stockValue = gameData.wallet
+      ?.filter((stock) => stock.game_user_id === userGameUserId)
+      ?.reduce((acc, stock) => {
+        const currentStock = gameData.stock?.find((s) => s.name === stock.name);
+        const stockPrice = currentStock ? currentStock.value : 0;
+        return acc + stock.value * stockPrice;
+      }, 0) || 0;
+  
     return cash + stockValue;
   };
+  
+  
 
-  const sortedRankData = gameData.users_data
-    .map((userData) => ({
-      name: `${gameData.users.find((u) => u.id === userData._boursicoteur_users_id).firstname} ${gameData.users.find((u) => u.id === userData._boursicoteur_users_id).lastname}`,
-      rank: "", // Le rang sera défini après le tri
-      portfolioValue: calculatePortfolioValue(userData).toFixed(2),
-      cash: userData.cash,
-      userId: userData._boursicoteur_users_id,
-    }))
-    .sort((a, b) => b.portfolioValue - a.portfolioValue);
+  const sortedRankData =
+    gameData.users_data?.map((userData) => {
+      const user = gameData.users?.find(
+        (u) => u.id === userData._boursicoteur_users_id
+      );
+      const name = user
+        ? `${user.firstname} ${user.lastname}`
+        : "Utilisateur inconnu";
+      return {
+        name: name,
+        rank: "",
+        portfolioValue: calculatePortfolioValue(userData).toFixed(2),
+        cash: userData.cash || 0,
+        userId: userData._boursicoteur_users_id,
+      };
+    })?.sort((a, b) => b.portfolioValue - a.portfolioValue) || [];
 
-  // Mise à jour des rangs après le tri
   sortedRankData.forEach((user, index) => {
     user.rank = index === 0 ? "1er" : `${index + 1}ème`;
-  });
-
-
-  const marketData = gameData.users_data[0].wallet.data.map((stock, index) => {
-    // Trouver la valeur actuelle de l'action dans gameData.stock
-    const currentStock = gameData.stock.find((s) => s.name === stock.name);
-    const stockPrice = currentStock ? currentStock.value : 0; // Utiliser 0 si la valeur n'est pas trouvée
-
-    return {
-      icon: require("../assets/adaptive-icon.png"),
-      name: stock.name,
-      value: `${stock.name} / ${stock.quantity.toFixed(2)}`,
-      amount: `${(stock.quantity * stockPrice).toFixed(2)}`, // Utiliser le prix réel ici
-    };
   });
 
   const userRank =
@@ -218,9 +239,35 @@ export default function Game() {
   const totalPlayers = sortedRankData.length;
   const userRankText = userRank === 1 ? "1er" : `${userRank}ème`;
 
+  const userData = gameData?.users_data?.[0] || null;
+
+if (userData && userData.id) {
+  // Ici, tu es sûr que userData et userData.id existent
+  console.log(userData.id);
+} else {
+  console.error("userData ou son id est null");
+}
 
 
-  
+  const marketData =
+  gameData.wallet
+    ?.filter((stock) => stock.game_user_id === userData.id)
+    ?.map((stock, index) => {
+      const currentStock = gameData.stock?.find(
+        (s) => s.name === stock.name
+      );
+      const stockPrice = currentStock ? currentStock.value : 0;
+
+      return {
+        icon: require("../assets/adaptive-icon.png"),
+        name: stock.name,
+        value: `${stock.name} / ${stock.value.toFixed(2)}`,
+        amount: `${(stock.value * stockPrice).toFixed(2)}`,
+        quantity: stock.value,
+      };
+    }) || [];
+
+
   return (
     <View>
       <ScrollView
@@ -233,11 +280,8 @@ export default function Game() {
         }
       >
         <View style={{ marginBottom: 120 }}>
-  
-          <ClosingInfo style={{marginBottom: 0}}></ClosingInfo>
-          <Text style={[textStyles.body, { marginVertical:0 }]}>
-
-          </Text>
+          <ClosingInfo style={{ marginBottom: 0 }}></ClosingInfo>
+          <Text style={[textStyles.body, { marginVertical: 0 }]}></Text>
 
           <Text style={[textStyles.heading1, { marginVertical: 15 }]}>
             Classement
@@ -245,11 +289,13 @@ export default function Game() {
           <InfoBanner
             iconType="time"
             text={`Il reste ${formatTime(timeRemaining)}`}
-            style={{ flex: 1, paddingHorizontal: spacings.spacing.large, marginVertical: 15 }}
+            style={{
+              flex: 1,
+              paddingHorizontal: spacings.spacing.large,
+              marginVertical: 15,
+            }}
           />
-                    <Text style={[textStyles.body, { marginVertical: 0 }]}>
-            
-          </Text>
+          <Text style={[textStyles.body, { marginVertical: 0 }]}></Text>
           <View style={styles.container}>
             <View style={styles.walletContainer}>
               <Ionicons
@@ -265,21 +311,21 @@ export default function Game() {
           </View>
           <View style={styles.container}>
             <View>
-            <View>
-  {sortedRankData.slice(0, 3).map((user, index) => (
-    <RankItem
-      key={`${user.userId}-${index}`} // Combine userId with index to ensure uniqueness
-      user={{
-        avatar: "../assets/adaptive-icon.png",
-        name: user.name,
-        rank: user.rank,
-        points: "N/A",
-        amount: `${user.portfolioValue}`,
-        change: "N/A",
-      }}
-    />
-  ))}
-</View>
+              <View>
+                {sortedRankData.slice(0, 3).map((user, index) => (
+                  <RankItem
+                    key={`${user.userId}-${index}`}
+                    user={{
+                      avatar: "../assets/adaptive-icon.png",
+                      name: user.name,
+                      rank: user.rank,
+                      points: "N/A",
+                      amount: `${user.portfolioValue}`,
+                      change: "N/A",
+                    }}
+                  />
+                ))}
+              </View>
 
               <View style={{ marginTop: 20 }}>
                 <Button
@@ -295,27 +341,35 @@ export default function Game() {
             Mon portefeuille
           </Text>
           <View style={styles.container}>
-          <View style={styles.walletContainer}>
-  <Ionicons
-    name="wallet-outline"
-    size={24}
-    color={colors.black1}
-    style={styles.icon}
-  />
-  <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
-    {calculatePortfolioValue(gameData.users_data[0]).toFixed(2)} €
-  </Text>
-
-  
-</View>
-<Text style={[textStyles.body, { marginVertical: 5 }]}>
-    Dont capital: {(calculatePortfolioValue(gameData.users_data[0]) - gameData.users_data[0].cash).toFixed(2)} €
-  </Text>
-  <Text style={[textStyles.body, { marginVertical: 15 }]}>
-    Dont liquidités: {gameData.users_data[0].cash.toFixed(2)} €
-  </Text>
- <View style={styles.chartContainer}>
-          <StockChart></StockChart>
+            <View style={styles.walletContainer}>
+              <Ionicons
+                name="wallet-outline"
+                size={24}
+                color={colors.black1}
+                style={styles.icon}
+              />
+              <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
+                {userData
+                  ? calculatePortfolioValue(userData).toFixed(2)
+                  : "N/A"}{" "}
+                €
+              </Text>
+            </View>
+            <Text style={[textStyles.body, { marginVertical: 5 }]}>
+              Dont capital:{" "}
+              {userData
+                ? (
+                    calculatePortfolioValue(userData) - userData.cash
+                  ).toFixed(2)
+                : "N/A"}{" "}
+              €
+            </Text>
+            <Text style={[textStyles.body, { marginVertical: 15 }]}>
+              Dont liquidités:{" "}
+              {userData?.cash ? userData.cash.toFixed(2) : "N/A"} €
+            </Text>
+            <View style={styles.chartContainer}>
+              <StockChart></StockChart>
             </View>
             <Button
               type="secondary"
@@ -329,7 +383,7 @@ export default function Game() {
           </Text>
           {marketData.map((market, index) => (
             <TouchableOpacity
-              key={`${market.name}-${index}`} // Combine market name with index to ensure uniqueness
+              key={`${market.name}-${index}`}
               onPress={() => {
                 setStockID(market);
                 marketSheetRef.current?.snapToIndex(0);
@@ -347,7 +401,6 @@ export default function Game() {
         </View>
       </ScrollView>
       <View style={styles.mainContainer}>
-
         <View style={styles.fixedButtonContainer}>
           <View style={{ width: "49%" }}>
             <Button
@@ -366,12 +419,11 @@ export default function Game() {
             />
           </View>
         </View>
-        
       </View>
-      {/* Classement 3*/}
+      {/* Classement */}
       <BottomSheet
         ref={bottomSheetRef}
-        index={-1} // Par défaut, Bottom Sheet est cachée
+        index={-1}
         snapPoints={snapPoints}
         enablePanDownToClose={true}
         onChange={(index) => handleSheetChanges(index, bottomSheetRef)}
@@ -401,7 +453,7 @@ export default function Game() {
           </View>
           {sortedRankData.map((user, index) => (
             <RankItem
-              key={`${user.userId}-${index}`} // Combine userId with index to ensure uniqueness
+              key={`${user.userId}-${index}`}
               user={{
                 avatar: "../assets/adaptive-icon.png",
                 name: user.name,
@@ -414,10 +466,10 @@ export default function Game() {
           ))}
         </View>
       </BottomSheet>
-      {/* Portefeuille*/}
+      {/* Portefeuille */}
       <BottomSheet
         ref={situationSheetRef}
-        index={-1} // Par défaut, Bottom Sheet est cachée
+        index={-1}
         snapPoints={snapPoints}
         enablePanDownToClose={true}
         onChange={(index) => handleSheetChanges(index, situationSheetRef)}
@@ -432,43 +484,52 @@ export default function Game() {
           Portefeuille
         </Text>
         <View style={styles.container}>
-        <View style={styles.walletContainer}>
-  <Ionicons
-    name="wallet-outline"
-    size={24}
-    color={colors.black1}
-    style={styles.icon}
-  />
-  <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
-    {calculatePortfolioValue(gameData.users_data[0]).toFixed(2)} €
-  </Text>
-
-
-  
-</View>
-<Text style={[textStyles.body, { marginVertical: 5 }]}>
-    Dont capital: {(calculatePortfolioValue(gameData.users_data[0]) - gameData.users_data[0].cash).toFixed(2)} €
-  </Text>
-  <Text style={[textStyles.body, { marginVertical: 15 }]}>
-    Dont liquidités: {gameData.users_data[0].cash.toFixed(2)} €
-  </Text>
+          <View style={styles.walletContainer}>
+            <Ionicons
+              name="wallet-outline"
+              size={24}
+              color={colors.black1}
+              style={styles.icon}
+            />
+            <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
+              {userData
+                ? calculatePortfolioValue(userData).toFixed(2)
+                : "N/A"}{" "}
+              €
+            </Text>
+          </View>
+          <Text style={[textStyles.body, { marginVertical: 5 }]}>
+            Dont capital:{" "}
+            {userData
+              ? (
+                  calculatePortfolioValue(userData) - userData.cash
+                ).toFixed(2)
+              : "N/A"}{" "}
+            €
+          </Text>
+          <Text style={[textStyles.body, { marginVertical: 15 }]}>
+            Dont liquidités:{" "}
+            {userData?.cash ? userData.cash.toFixed(2) : "N/A"} €
+          </Text>
         </View>
       </BottomSheet>
-      
+
       <BottomSheet
         ref={marketSheetRef}
-        index={-1} // Par défaut, Bottom Sheet est cachée
+        index={-1}
         snapPoints={snapPoints}
         enablePanDownToClose={true}
         onChange={(index) => handleSheetChanges(index, marketSheetRef)}
       >
         <View style={styles.bottomSheet}>
-        <View style={{ flex: 0, flexDirection: 'row', alignItems: 'center' }}>
-  <View style={{marginTop: 20}}><StockLogo name={stockID.name} /></View>
-  <Text style={textStyles.heading1}>{stockID.name} </Text>
-</View>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View style={{ marginTop: 20 }}>
+              <StockLogo name={stockID?.name || ""} />
+            </View>
+            <Text style={textStyles.heading1}>{stockID?.name || ""} </Text>
+          </View>
 
-          <Text style={textStyles.heading1}>{stockID.amount} € </Text>
+          <Text style={textStyles.heading1}>{stockID?.amount || ""} € </Text>
 
           <StockChart></StockChart>
         </View>
@@ -484,7 +545,7 @@ export default function Game() {
       >
         <View>
           <ScrollView
-            contentContainerStyle={{ padding: configSpacing.spacing.medium }}
+            contentContainerStyle={{ padding: spacings.spacing.medium }}
           >
             <Text style={textStyles.heading1}>Acheter</Text>
             <Text style={[textStyles.body, { color: colors.black2 }]}>
@@ -492,26 +553,25 @@ export default function Game() {
             </Text>
             <SearchBar placeholder="Rechercher une entreprise..." />
 
-            {gameData.stock.map((company, index) => (
+            {gameData.stock?.map((company, index) => (
               <TouchableOpacity
-                key={`${company.name}-${index}`} // Assure l'unicité des clés
+                key={`${company.name}-${index}`}
                 onPress={() => {
                   setStockID(company);
-                  buySheetRef.current?.close(); // Ferme le premier BottomSheet
-                  xxxSheetRef.current?.snapToIndex(0); // Ouvre le second BottomSheet (Achat partie 2)
+                  buySheetRef.current?.close();
+                  xxxSheetRef.current?.snapToIndex(0);
                 }}
               >
                 <MarketBadge
-                  icon={require("../assets/adaptive-icon.png")} // Remplacez par l'icône appropriée si disponible
+                  icon={require("../assets/adaptive-icon.png")}
                   name={company.name}
-                  value={company.name} // Passe la valeur en tant que nombre
-                  amount={company.value.toFixed(2)} // Montant à afficher, formaté en euros
-                  extraInfo={company.extraInfo || ""} // Informations supplémentaires, si disponibles
+                  value={company.name}
+                  amount={company.value.toFixed(2)}
+                  extraInfo={company.extraInfo || ""}
                 />
               </TouchableOpacity>
             ))}
           </ScrollView>
-          
         </View>
       </BottomSheet>
 
@@ -524,12 +584,14 @@ export default function Game() {
         onChange={(index) => handleSheetChanges(index, xxxSheetRef)}
       >
         <View style={styles.bottomSheet}>
-        <View style={{ flex: 0, flexDirection: 'row', alignItems: 'center' }}>
-  <View style={{marginTop: 20}}><StockLogo name={stockID.name} /></View>
-  <Text style={textStyles.heading1}>{stockID.name} </Text>
-</View>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View style={{ marginTop: 20 }}>
+              <StockLogo name={stockID?.name || ""} />
+            </View>
+            <Text style={textStyles.heading1}>{stockID?.name || ""} </Text>
+          </View>
 
-        <Text style={[textStyles.body, { color: colors.black2 }]}>
+          <Text style={[textStyles.body, { color: colors.black2 }]}>
             Détails de l'action
           </Text>
           <View style={styles.walletContainer}>
@@ -540,10 +602,10 @@ export default function Game() {
               style={styles.icon}
             />
             <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
-              {typeof stockID.value === 'number' ? `${stockID.value.toFixed(2)}` : "N/A"}
+              {typeof stockID?.value === "number"
+                ? `${stockID.value.toFixed(2)}`
+                : "N/A"}
             </Text>
-
-            
           </View>
           <StockChart></StockChart>
           <Button
@@ -551,8 +613,8 @@ export default function Game() {
             iconName="logo-euro"
             title="Acheter"
             onPress={() => {
-              yyySheetRef.current?.snapToIndex(0); // Ouvre Achat partie 3
-              xxxSheetRef.current?.close(); // Ferme Achat partie 2
+              yyySheetRef.current?.snapToIndex(0);
+              xxxSheetRef.current?.close();
             }}
           />
         </View>
@@ -569,106 +631,107 @@ export default function Game() {
         <View style={styles.bottomSheet}>
           <Text style={textStyles.heading1}>Montant à investir</Text>
 
-         <Text
-  style={[
-    textStyles.body,
-    { color: colors.black2, marginVertical: 10 },
-  ]}
->
-  Solde du compte
-</Text>
-<Text
-  style={[
-    textStyles.heading2,
-    { color: colors.black1, marginBottom: 10 },
-  ]}
->
-  {gameData.users_data[0].cash.toFixed(2)} €
-</Text>
+          <Text
+            style={[
+              textStyles.body,
+              { color: colors.black2, marginVertical: 10 },
+            ]}
+          >
+            Solde du compte
+          </Text>
+          <Text
+            style={[
+              textStyles.heading2,
+              { color: colors.black1, marginBottom: 10 },
+            ]}
+          >
+            {userData?.cash ? userData.cash.toFixed(2) : "N/A"} €
+          </Text>
 
-<AmountInput
-  placeholder="Montant"
-  keyboard="digits"
-  capitalize="yes"
-  value={totalInvestment} // The value for total investment
-  onChangeText={(value) => setTotalInvestment(Number(value))} // Update the state as the user types
-/>
+          <AmountInput
+            placeholder="Montant"
+            keyboard="digits"
+            capitalize="yes"
+            value={totalInvestment}
+            onChangeText={(value) => setTotalInvestment(Number(value))}
+          />
 
+          <Button
+            type="primary"
+            title="Confirmer l'achat"
+            iconName="checkmark-outline"
+            onPress={async () => {
+              setReloading(true);
+              try {
+                const userToken = await AsyncStorage.getItem("userToken");
+                if (!userToken) {
+                  alert("Erreur : Token utilisateur introuvable.");
+                  return;
+                }
 
+                const userCash = userData?.cash || 0;
 
-<Button
-  type="primary"
-  title="Confirmer l'achat"
-  iconName="checkmark-outline"
-  onPress={async () => {
-    try {
-      const userToken = await AsyncStorage.getItem("userToken");
-      if (!userToken) {
-        alert("Erreur : Token utilisateur introuvable.");
-        return;
-      }
+                if (totalInvestment > userCash) {
+                  alert(
+                    "Erreur : Le montant dépasse votre solde disponible."
+                  );
+                  return;
+                }
 
-      const userCash = gameData.users_data[0].cash;
+                const stockPrice = stockID?.value || 0;
+                const purchaseAmount = totalInvestment / stockPrice;
 
-      if (totalInvestment > userCash) {
-        alert("Erreur : Le montant dépasse votre solde disponible.");
-        return;
-      }
-
-      // Calculate the quantity to purchase
-      const stockPrice = stockID.value;
-      const purchaseAmount = totalInvestment / stockPrice;
-
-      // Prepare the API request body
-      const body = {
-        name: stockID.name,  // Company name
-        quantity: purchaseAmount,  // Quantity to purchase
-        game_id: 23  // Replace with the actual game_id if needed
-      };
-
-      const response = await fetch("https://xmpt-xa8m-h6ai.n7c.xano.io/api:RMY1IHfK/game/buy", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: userToken,
-        },
-        body: JSON.stringify(body),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Success: Close popup, show success message, and update cash balance
-        yyySheetRef.current?.close();
-        buySheetRef.current?.close();
-        alert("Achat effectué avec succès !");
-        fetchData()
-        // Hide keyboard upon success
-        Keyboard.dismiss(); // Hide the keyboard
-
-        // Update user's cash in the front-end
-        const newCash = data.new_cash;
-        setGameData((prevGameData) => ({
-          ...prevGameData,
-          users_data: prevGameData.users_data.map((userData) =>
-            userData._boursicoteur_users_id === gameData.user_id
-              ? { ...userData, cash: newCash }
-              : userData
-          ),
-        }));
-      } else {
-        // Error: Show error message
-        alert(`Erreur lors de l'achat : ${data.message || "Veuillez réessayer."}`);
-      }
-    } catch (error) {
-      console.error("Erreur lors de la tentative d'achat :", error);
-      alert("Une erreur est survenue, veuillez réessayer.");
-    }
-  }}
-/>
+                const body = {
+  name: stockID?.name || "",
+  quantity: purchaseAmount,
+  game_id: gameData.game.id,
+};
 
 
+                const response = await fetch(
+                  "https://xmpt-xa8m-h6ai.n7c.xano.io/api:RMY1IHfK/transaction/buy",
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: userToken,
+                    },
+                    body: JSON.stringify(body),
+                  }
+                );
 
+                const data = await response.json();
+
+                if (response.ok) {
+                  yyySheetRef.current?.close();
+                  buySheetRef.current?.close();
+                  setReloading(false);
+                  alert("Achat effectué avec succès !");
+                  fetchData();
+                  Keyboard.dismiss();
+
+                  const newCash = data.new_cash;
+                  setGameData((prevGameData) => ({
+                    ...prevGameData,
+                    users_data: prevGameData.users_data.map((userData) =>
+                      userData._boursicoteur_users_id ===
+                      gameData.user_id
+                        ? { ...userData, cash: newCash }
+                        : userData
+                    ),
+                  }));
+                } else {
+                  console.log("error");
+                }
+              } catch (error) {
+                console.error(
+                  "Erreur lors de la tentative d'achat :",
+                  error
+                );
+                console.log("error");
+              }
+            }}
+          />
         </View>
       </BottomSheet>
 
@@ -817,6 +880,7 @@ Actions détenues
           title="Confirmer la vente"
           iconName="checkmark-outline"
           onPress={async () => {
+            setReloading(true);
             try {
               const userToken = await AsyncStorage.getItem("userToken");
               if (!userToken) {
@@ -835,10 +899,12 @@ Actions détenues
               // Prepare the API request body
               const body = {
                 name: selectedStockToSell.name,  // Company name
-                quantity: sellQuantity,  // Quantity to sell
+                quantity: sellQuantity,          // Quantity to sell
+                game_id: gameData.game.id,       // Add this line if required
               };
+              
 
-              const response = await fetch("https://xmpt-xa8m-h6ai.n7c.xano.io/api:RMY1IHfK/game/sell", {
+              const response = await fetch("https://xmpt-xa8m-h6ai.n7c.xano.io/api:RMY1IHfK/transaction/sell", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
@@ -854,6 +920,7 @@ Actions détenues
                 sellPageTwoSheetRef.current?.close();
                 sellSheetRef.current?.close();
                 Keyboard.dismiss(); // Hide the keyboard
+                setReloading(false);
                 alert("Vente effectuée avec succès !");
                 
                 // Refresh the data on the page
