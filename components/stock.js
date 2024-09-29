@@ -1,27 +1,27 @@
 // components/StockChart.js
 
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import { LineChart } from 'react-native-gifted-charts'; // Import du LineChart
+import { View, StyleSheet } from 'react-native';
+import { LineChart } from 'react-native-chart-kit'; // Import du LineChart depuis react-native-chart-kit
 import colors from '../config-colors';
 import textStyles from '../config-texts';
+import { Dimensions } from 'react-native';
 
 // Fonction pour générer des données boursières simulées
 const generateStockData = () => {
   const data = [];
+  const labels = [];
   let lastPrice = 1000; // Prix de départ (1000€ par exemple)
 
-  for (let i = 0; i < 60; i++) { // Générer 30 points (correspondant à 30 jours par exemple)
-    // Simuler une variation aléatoire entre -5% et +5%
-    const changePercent = (Math.random() * 80 -40) / 100;
+  for (let i = 0; i < 60; i++) {
+    // Simuler une variation aléatoire entre -40% et +40%
+    const changePercent = (Math.random() * 80 - 40) / 100;
     const newPrice = lastPrice + lastPrice * changePercent;
-    data.push({
-      value: parseFloat(newPrice.toFixed(2)), // Prix arrondi à 2 décimales
-      label: ``, // Étiquettes des jours : J1, J2, etc.
-    });
+    data.push(parseFloat(newPrice.toFixed(2))); // Prix arrondi à 2 décimales
+    labels.push(''); // Étiquettes vides pour l'axe X
     lastPrice = newPrice;
   }
-  return data;
+  return { data, labels };
 };
 
 const StockChart = () => {
@@ -30,42 +30,57 @@ const StockChart = () => {
 
   return (
     <View style={styles.chartContainer}>
-
-<LineChart
-  data={stockChartData}
-  width={265}
-  height={180}
-  color={colors.indigo}
-  isAnimated
-  hideRules
-  initialSpacing={0}
-  spacing={10}
-  rulesType="solid"
-  hideAxesAndRules
-  hideDataPoints={true}
-  hideShadow={false}
-  shadowColor={colors.indigo}
-  shadowOpacity={0.2}
-  shadowGradientStop={0.8}
-  frontColor={colors.indigo}
-  dataPointsHeight={6}
-  noOfSections={4}
-  decimalPlaces={0.2}
-  thickness={2}
-  curved
-  xAxisColor={colors.grey3}
-  yAxisColor={colors.grey3}
-  hideYAxisText={true} // Cache le texte de l'axe Y
-/>
-
+      <LineChart
+        data={{
+          labels: stockChartData.labels,
+          datasets: [
+            {
+              data: stockChartData.data,
+              color: (opacity = 1) => colors.indigo, // Couleur de la ligne
+              strokeWidth: 2, // Épaisseur de la ligne
+            },
+          ],
+        }}
+        width={280}
+        height={180}
+        chartConfig={{
+          backgroundColor: colors.grey2,
+          backgroundGradientFrom: colors.grey2,
+          backgroundGradientTo: colors.grey2,
+          decimalPlaces: 2, // Nombre de décimales
+          color: (opacity = 1) => colors.indigo,
+          labelColor: (opacity = 1) => colors.black2,
+          style: {
+            borderRadius: 0,
+          },
+          propsForBackgroundLines: {
+            strokeWidth: 0, // Cache les lignes de fond
+          },
+          propsForDots: {
+            r: '0', // Cache les points de données
+            strokeWidth: '0',
+          },
+        }}
+        bezier // Rend la ligne courbée
+        withDots={true} // Cache les points de données
+        withInnerLines={true} // Cache les lignes internes
+        withOuterLines={true} // Cache les lignes externes
+        withVerticalLabels={true} // Cache les étiquettes verticales
+        withHorizontalLabels={true} // Cache les étiquettes horizontales
+        withShadow={true} // Affiche l'ombre sous la ligne
+        style={{
+          borderRadius: 0,
+        }}
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   chartContainer: {
-    marginVertical:20,
+    marginVertical: 20,
     alignItems: 'center',
+    backgroundColor: colors.grey1
   },
 });
 
