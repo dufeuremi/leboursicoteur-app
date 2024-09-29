@@ -47,15 +47,40 @@ export default function App() {
             name="Fonds" 
             component={FondsScreen} 
             options={({ navigation }) => ({
-              title: "    Fonds d'investissement",
+              title: "  Fonds d'investissement",
               headerShown: true,
               headerRight: () => (
                 <TouchableOpacity
-                  onPress={() => navigation.navigate('Settings')}
-                  style={{ paddingRight: configSpacing.spacing.medium }}
-                >
-                  <Icon name="person-circle" size={29} color={colors.grey4} />
-                </TouchableOpacity>
+  onPress={async () => {
+    try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        navigation.navigate('Signup');
+        return;
+      }
+      
+      const response = await axios.get("https://xmpt-xa8m-h6ai.n7c.xano.io/api:RMY1IHfK/auth/get", {
+        headers: {
+          'Authorization': token,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.status === 200) {
+        navigation.navigate('Settings');
+      } else {
+        navigation.navigate('Signup');
+      }
+    } catch (error) {
+      navigation.navigate('Settings');
+    }
+  }}
+  style={{ paddingRight: configSpacing.spacing.medium }}
+>
+  <Icon name="person-circle" size={29} color={colors.grey4} />
+</TouchableOpacity>
+
               ),
             })}
           />

@@ -92,7 +92,6 @@ export default function SignupStep2B({ navigation }) {
         // Erreur générale
         Alert.alert('Erreur', 'Échec de la connexion. Veuillez vérifier vos informations.');
       }
-      console.error('Erreur lors de la connexion:', error);
     }
   };
   

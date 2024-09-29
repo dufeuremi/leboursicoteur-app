@@ -7,7 +7,7 @@ import textStyles from '../../config-texts';
 import Button from '../../components/button'; 
 import configColors from '../../config-colors';
 
-export default function createGameStep4({ navigation }) {
+export default function CreateGameStep4({ navigation }) {
   
   // Fonction pour stocker le nombre de joueurs par équipe dans AsyncStorage
   const storeTeamSize = async (teamSize) => {

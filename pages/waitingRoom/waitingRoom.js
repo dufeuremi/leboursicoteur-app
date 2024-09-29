@@ -110,7 +110,7 @@ function WaitingRoom() {
           <ListItem 
             key={index} 
             user={{
-              avatar: "https://example.com/avatar.jpg",
+              avatar: "../assets/avatar.png",
               name: `${user.firstname} ${user.lastname}`,
               email: user.email,
             }} 

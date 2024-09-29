@@ -9,7 +9,7 @@ import CustomInput from '../../components/input';
 import InfoBanner from '../../components/info';
 import configColors from '../../config-colors';
 
-export default function createGameStep2({ navigation }) {
+export default function CreateGameStep2({ navigation }) {
   const [gameName, setGameName] = useState(''); // État pour le nom du jeu
 
   // Fonction pour stocker le nom du jeu dans AsyncStorage

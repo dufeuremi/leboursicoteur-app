@@ -9,7 +9,7 @@ import CustomInput from '../../components/input';
 import InfoBanner from '../../components/info';
 import configColors from '../../config-colors';
 
-export default function createGameStep1({ navigation }) {
+export default function CreateGameStep1({ navigation }) {
   return (
     <View>
         <ProgressBar currentStep={1} totalSteps={6} color={configColors.indigo} />

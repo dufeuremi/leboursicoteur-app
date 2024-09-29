@@ -10,7 +10,7 @@ import configColors from '../../config-colors';
 import InfoBanner from '../../components/info';
 import AmountInput from '../../components/amountInput';
 
-export default function createGameStep3({ navigation }) {
+export default function CreateGameStep3({ navigation }) {
   const [gameCapital, setGameCapital] = useState(''); // État pour le capital du jeu
 
   // Fonction pour stocker le capital du jeu dans AsyncStorage

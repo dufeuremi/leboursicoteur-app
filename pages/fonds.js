@@ -38,10 +38,6 @@ function FondsScreen() {
     setLoading(true); // Commencer le chargement
     try {
       const userToken = await AsyncStorage.getItem('userToken');
-      if (!userToken) {
-        console.error('Token non trouvé dans le cache');
-        return;
-      }
   
       const response = await fetch(API_URL, {
         method: 'GET',
@@ -70,7 +66,7 @@ function FondsScreen() {
   
       setGames(allGames);
     } catch (error) {
-      console.error('Erreur lors de la récupération des données :', error);
+
     } finally {
       setLoading(false); // Arrêter le chargement après la récupération des données
     }
@@ -129,11 +125,11 @@ function FondsScreen() {
           }
         >
           <View style={styles.subContainer}>
-            {games.length > 0 ? (
-              games.map((game) => (
-                <GameCard key={game.id} game={game} onPress={() => handleGamePress(game)} />
-              ))
-            ) : (
+          {games.length > 0 ? (
+  games.map((game, index) => (
+    <GameCard key={`${game.id}-${index}`} game={game} onPress={() => handleGamePress(game)} />
+  ))
+) : (
 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
   <Image
     source={require('../assets/wallet.png')}

@@ -84,7 +84,6 @@ export default function Game() {
       const selectedGameId = await AsyncStorage.getItem("selected_game_id");
 
       if (!userToken || !selectedGameId) {
-        console.error("Token ou ID de jeu non trouvé dans le cache");
         return;
       }
 
@@ -105,7 +104,6 @@ export default function Game() {
       }
       setRefreshing(false);
     } catch (error) {
-      console.error("Erreur lors de la récupération des données :", error);
       setRefreshing(false);
     }
   };
@@ -115,13 +113,13 @@ export default function Game() {
     fetchData();
     setTimeout(() => {
       setRefreshing(false);
-    }, 2000);
+    }, 6000);
   }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
       fetchData();
-    }, 4000);
+    }, 6000);
 
     return () => clearInterval(interval);
   }, []);
@@ -132,7 +130,7 @@ export default function Game() {
         const now = Date.now();
         const timeLeft = gameData.game.finish_at - now;
         setTimeRemaining(timeLeft);
-      }, 1000);
+      }, 6000);
 
       return () => clearInterval(interval);
     }
@@ -189,14 +187,12 @@ export default function Game() {
 
   const calculatePortfolioValue = (userData) => {
     if (!userData) {
-      console.error("userData est null ou undefined");
       return 0;
     }
   
     const cash = userData.cash || 0;
     const userGameUserId = userData.id;
     if (!userGameUserId) {
-      console.error("userGameUserId est null ou undefined");
       return 0;
     }
   
@@ -239,19 +235,21 @@ export default function Game() {
   const totalPlayers = sortedRankData.length;
   const userRankText = userRank === 1 ? "1er" : `${userRank}ème`;
 
-  const userData = gameData?.users_data?.[0] || null;
+  const userData = gameData?.users_data?.find(
+    (u) => u._boursicoteur_users_id === gameData.user_id
+  ) || null;
+  
 
 if (userData && userData.id) {
   // Ici, tu es sûr que userData et userData.id existent
   console.log(userData.id);
-} else {
-  console.error("userData ou son id est null");
-}
+} 
 
 
-  const marketData =
+
+
+const marketData =
   gameData.wallet
-    ?.filter((stock) => stock.game_user_id === userData.id)
     ?.map((stock, index) => {
       const currentStock = gameData.stock?.find(
         (s) => s.name === stock.name
@@ -267,6 +265,8 @@ if (userData && userData.id) {
       };
     }) || [];
 
+
+console.log("length"+gameData.wallet.length);
 
   return (
     <View>
@@ -379,25 +379,30 @@ if (userData && userData.id) {
             />
           </View>
           <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
-            Mes investissements
-          </Text>
-          {marketData.map((market, index) => (
-            <TouchableOpacity
-              key={`${market.name}-${index}`}
-              onPress={() => {
-                setStockID(market);
-                marketSheetRef.current?.snapToIndex(0);
-              }}
-            >
-              <MarketBadge
-                icon={market.icon}
-                value={market.value}
-                amount={market.amount}
-                extraInfo={market.extraInfo}
-                name={market.name}
-              />
-            </TouchableOpacity>
-          ))}
+  Mes investissements
+</Text>
+{(marketData.length === 0 || marketData.every(market => market.quantity === 0)) ? (
+  <Text>Aucun investissement</Text>
+) : (
+  marketData.map((market, index) => (
+    <TouchableOpacity
+      key={`${market.name}-${index}`}
+      onPress={() => {
+        setStockID(market);
+        marketSheetRef.current?.snapToIndex(0);
+      }}
+    >
+      <MarketBadge
+        icon={market.icon}
+        value={market.value}
+        amount={market.amount}
+        extraInfo={market.extraInfo}
+        name={market.name}
+      />
+    </TouchableOpacity>
+  ))
+)}
+
         </View>
       </ScrollView>
       <View style={styles.mainContainer}>
@@ -431,7 +436,7 @@ if (userData && userData.id) {
         <View style={styles.contentContainer}>
           <Text style={styles.containerHeadline}>Classement</Text>
           <View style={styles.container}>
-            <View style={styles.walletContainer}>
+          <View style={styles.walletContainer}>
               <Ionicons
                 name="medal-outline"
                 size={24}
@@ -439,15 +444,7 @@ if (userData && userData.id) {
                 style={styles.icon}
               />
               <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
-                {userRankText} / {totalPlayers}
-              </Text>
-              <Text
-                style={[
-                  textStyles.heading2,
-                  { color: colors.indigo, marginLeft: 10, fontSize: 18 },
-                ]}
-              >
-                ↗ 1 place(s)
+                {userRankText} / {totalPlayers} boursicoteurs
               </Text>
             </View>
           </View>
@@ -724,10 +721,6 @@ if (userData && userData.id) {
                   console.log("error");
                 }
               } catch (error) {
-                console.error(
-                  "Erreur lors de la tentative d'achat :",
-                  error
-                );
                 console.log("error");
               }
             }}
@@ -930,7 +923,6 @@ Actions détenues
                 alert(`Erreur lors de la vente : ${data.message || "Veuillez réessayer."}`);
               }
             } catch (error) {
-              console.error("Erreur lors de la tentative de vente :", error);
               alert("Une erreur est survenue, veuillez réessayer.");
             }
           }}

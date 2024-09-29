@@ -1,32 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import configColors from '../config-colors';
 import configSpacing from '../config-spacing';
 
 const AmountInput = ({ placeholder, capitalize, secureTextEntry, value, onChangeText }) => {
-  const [cursorPosition, setCursorPosition] = useState({ start: 0, end: 0 });
-
-  const handleChange = (text) => {
-    // Permet uniquement les chiffres, les points et les virgules
-    const formattedValue = text.replace(/[^0-9.,]/g, '');
-
-    // Remplace la première virgule ou point par un point (consistant)
-    let cleanedValue = formattedValue.replace(/,/g, '.');
-
-    // Si plusieurs séparateurs décimaux sont présents, ne garde que le premier
-    const decimalParts = cleanedValue.split('.');
-    if (decimalParts.length > 2) {
-      cleanedValue = decimalParts[0] + '.' + decimalParts.slice(1).join('');
-    }
-
-    // Appeler la fonction de rappel onChangeText pour mettre à jour le parent
-    onChangeText(cleanedValue);
-
-    // Met à jour la position du curseur
-    const cursorPos = cleanedValue.length;
-    setCursorPosition({ start: cursorPos, end: cursorPos });
-  };
-
   return (
     <View style={styles.container}>
       <TextInput
@@ -35,10 +12,9 @@ const AmountInput = ({ placeholder, capitalize, secureTextEntry, value, onChange
         placeholderTextColor={configColors.grey4}
         autoCapitalize={capitalize}
         secureTextEntry={secureTextEntry}
-        onChangeText={handleChange}
-        value={value} // Assurez-vous que value est une chaîne
-        keyboardType="numeric"
-        selection={cursorPosition} // Positionne le curseur
+        value={value}
+        onChangeText={onChangeText}
+        keyboardType="numeric" // Vous pouvez le changer en "numeric" si nécessaire
       />
     </View>
   );

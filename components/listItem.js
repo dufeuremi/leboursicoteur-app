@@ -10,7 +10,7 @@ const RankItem = ({ user }) => {
   return (
     <View style={styles.container}>
       <Image 
-          source={{ uri: 'https://icons8.com/l/3d/images/3_2_with_phone_man_1.webp' }} // Remplace par l'URL de l'image ou le chemin local
+          source={require( '../assets/avatar.png')} // Remplace par l'URL de l'image ou le chemin local
           style={styles.avatar}
     />
       <View style={styles.infoContainer}>
