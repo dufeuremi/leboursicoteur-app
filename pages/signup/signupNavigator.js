@@ -9,7 +9,6 @@ import signupStep2B from './signupStep2B';
 import colors from '../../config-colors';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import Icon from 'react-native-vector-icons/Ionicons';
-import ProgressBar from '../../components/progressBar';
 import { View } from 'react-native';
 
 const Stack = createStackNavigator();

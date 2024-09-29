@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Importer AsyncStorage
-import ProgressBar from '../../components/progressBar'; // Import du composant
 import configComponent from '../../config-component';
 import textStyles from '../../config-texts';
 import Button from '../../components/button'; 
@@ -22,7 +21,6 @@ export default function CreateGameStep4({ navigation }) {
 
   return (
     <View>
-      <ProgressBar currentStep={4} totalSteps={6} color={configColors.indigo} />
       <View style={configComponent.background}>
         <Text style={textStyles.heading1}>Jouez par équipe de...</Text>
 
