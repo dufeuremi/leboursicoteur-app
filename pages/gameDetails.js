@@ -121,7 +121,7 @@ export default function Game() {
   useEffect(() => {
     const interval = setInterval(() => {
       fetchData();
-    }, 5000);
+    }, 4000);
 
     return () => clearInterval(interval);
   }, []);
