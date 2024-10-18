@@ -14,6 +14,9 @@ import CreateGameScreens from './pages/createGame/createGameNavigator';
 import colors from './config-colors';
 import WaitingRoom from './pages/waitingRoom/waitingNavigator';
 import configSpacing from './config-spacing';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+
 
 const Stack = createStackNavigator();
 
@@ -51,35 +54,47 @@ export default function App() {
               headerShown: true,
               headerRight: () => (
                 <TouchableOpacity
-  onPress={async () => {
-    try {
-      const token = await AsyncStorage.getItem('userToken');
-      if (!token) {
-        navigation.navigate('Signup');
-        return;
-      }
-      
-      const response = await axios.get("https://xmpt-xa8m-h6ai.n7c.xano.io/api:RMY1IHfK/auth/get", {
-        headers: {
-          'Authorization': token,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.status === 200) {
-        navigation.navigate('Settings');
-      } else {
-        navigation.navigate('Signup');
-      }
-    } catch (error) {
-      navigation.navigate('Settings');
-    }
-  }}
-  style={{ paddingRight: configSpacing.spacing.medium }}
->
-  <Icon name="person-circle" size={29} color={colors.grey4} />
-</TouchableOpacity>
+                onPress={async () => {
+                  try {
+                    const token = await AsyncStorage.getItem('userToken');
+              
+                    // Si le token est nul ou vide, redirige vers l'inscription
+                    if (!token) {
+                      console.log("Token inexistant. Redirection vers Signup.");
+                      navigation.navigate('Signup');
+                      return;
+                    }
+                    
+                    const response = await axios.get("https://xmpt-xa8m-h6ai.n7c.xano.io/api:RMY1IHfK/auth/get", {
+                      headers: {
+                        'Authorization': `Bearer ${token}`, // Ajout du Bearer
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                      }
+                    });
+              
+                    // Log pour voir le statut de la réponse et les données reçues
+                    console.log('API Response status:', response.status);
+                    console.log('API Response data:', response.data);
+              
+                    if (response.status === 200) { // Ajout d'une condition sur les données reçues
+                      console.log("Token valide. Redirection vers Settings.");
+                      navigation.navigate('Settings');
+                    } else {
+                      console.log("Token invalide ou erreur API. Redirection vers Signup.");
+                      navigation.navigate('Signup');
+                    }
+                  } catch (error) {
+                    console.log("Erreur lors de la requête API:", error.message);
+                    console.log("Redirection vers Signup.");
+                    navigation.navigate('Signup');
+                  }
+                }}
+                style={{ paddingRight: configSpacing.spacing.medium }}
+              >
+                <Icon name="person-circle" size={29} color={colors.grey4} />
+              </TouchableOpacity>
+              
 
               ),
             })}

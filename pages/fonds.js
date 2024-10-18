@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, Image } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; 
+import { useNavigation, useFocusEffect } from '@react-navigation/native'; 
 import colors from '../config-colors'; 
 import spacings from '../config-spacing';
 import GameCard from '../components/gameCard';  
@@ -17,7 +17,7 @@ function FondsScreen() {
   const navigation = useNavigation();
   const [games, setGames] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true); // Ajouter un état pour le chargement
+  const [loading, setLoading] = useState(true);
 
   const handleGamePress = async (game) => {
     try {
@@ -35,9 +35,14 @@ function FondsScreen() {
   };
 
   const fetchData = async () => {
-    setLoading(true); // Commencer le chargement
+    setLoading(true);
     try {
       const userToken = await AsyncStorage.getItem('userToken');
+      
+      if (!userToken) {
+        setGames([]);
+        return;
+      }
   
       const response = await fetch(API_URL, {
         method: 'GET',
@@ -49,44 +54,55 @@ function FondsScreen() {
       });
       const data = await response.json();
   
-      const now = moment();
       const allGames = [];
       console.log(data);
   
-      // Parcourir le tableau `games` dans la réponse
       data.games.forEach(gameArray => {
-        const game = gameArray.length > 0 ? gameArray[0] : null;  // Vérifier si gameArray[0] existe
+        const game = gameArray.length > 0 ? gameArray[0] : null;
   
         if (game) {
-          allGames.push(game);
-        } else {
-          console.error('gameArray est vide ou undefined:', gameArray);
+          const participants = calculateParticipants(data.numb, game.id);
+          allGames.push({ ...game, participants });
         }
       });
   
       setGames(allGames);
     } catch (error) {
-
+      console.error('Erreur lors de la récupération des données:', error);
     } finally {
-      setLoading(false); // Arrêter le chargement après la récupération des données
+      setLoading(false);
     }
+  };
+
+  const calculateParticipants = (numbArray, gameId) => {
+    if (numbArray && Array.isArray(numbArray)) {
+      for (let i = 0; i < numbArray.length; i += 2) {
+        if (numbArray[i] === gameId && i + 1 < numbArray.length) {
+          return numbArray[i + 1];
+        }
+      }
+    }
+    return 0;
   };
 
   useEffect(() => {
     fetchData();
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [])
+  );
+
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
     fetchData().finally(() => setRefreshing(false));
   }, []);
 
-
-  // Fonction pour gérer la connexion à un fond ou la création d'un fond
   const handlePress = async (targetScreen) => {
     try {
       const token = await AsyncStorage.getItem('userToken');
-      console.log(token);
       if (!token) {
         navigation.navigate('Signup');
         return;
@@ -99,9 +115,9 @@ function FondsScreen() {
         },
       });
       if (response.status == 200) {
-        navigation.navigate(targetScreen); // Naviguer vers l'écran cible
+        navigation.navigate(targetScreen);
       } else {
-        navigation.navigate("home"); // Naviguer vers l'écran cible
+        navigation.navigate("home");
       }
     } catch (error) {
       console.error('Erreur lors de la requête GET', error);
@@ -110,7 +126,7 @@ function FondsScreen() {
 
   return (
     <View style={styles.container}>
-      {loading ? (  // Afficher SkeletonLoader pendant le chargement
+      {loading ? (
         <View style={styles.loaderContainer}>
           <SkeletonLoader width={310} height={50} borderRadius={16} />
           <SkeletonLoader width={310} height={200} borderRadius={16} />
@@ -119,45 +135,43 @@ function FondsScreen() {
         </View>
       ) : ( 
         <ScrollView 
-          contentContainerStyle={styles.scrollViewContent} // Ajout du padding pour éviter le chevauchement
+          contentContainerStyle={styles.scrollViewContent}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
           <View style={styles.subContainer}>
           {games.length > 0 ? (
-  games.map((game, index) => (
-    <GameCard key={`${game.id}-${index}`} game={game} onPress={() => handleGamePress(game)} />
-  ))
-) : (
-<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-  <Image
-    source={require('../assets/wallet.png')}
-    style={{
-      width: 120,
-      height: 120,
-      shadowColor: colors.indigo,
-      marginTop: spacings.spacing.huge
-    }}
-  />
-  <Text
-    style={[
-      texts.body,
-      {
-        textAlign: 'center',
-        fontSize: 15,
-        marginBottom: 20,
-        marginHorizontal: spacings.spacing.large,
-        marginTop: spacings.spacing.medium,
-      },
-    ]}
-  >
-    Commencez par créer ou rejoindre un fond.
-  </Text>
-</View>
-
-
-            )}
+            games.map((game, index) => (
+              <GameCard key={`${game.id}-${index}`} game={game} participantss={game.participants} onPress={() => handleGamePress(game)} />
+            ))
+          ) : (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <Image
+                source={require('../assets/wallet.png')}
+                style={{
+                  width: 120,
+                  height: 120,
+                  shadowColor: colors.indigo,
+                  marginTop: spacings.spacing.huge
+                }}
+              />
+              <Text
+                style={[
+                  texts.body,
+                  {
+                    textAlign: 'center',
+                    fontSize: 15,
+                    marginBottom: 20,
+                    marginHorizontal: spacings.spacing.large,
+                    marginTop: spacings.spacing.medium,
+                  },
+                ]}
+              >
+                Commencez par créer ou rejoindre un fond.
+              </Text>
+            </View>
+          )}
           </View>
         </ScrollView>
       )}
@@ -188,7 +202,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.grey1,
-    position: 'relative', // Assure que les éléments absolus sont positionnés par rapport à ce conteneur
+    position: 'relative',
   },
   subContainer: {
     flex: 1,
@@ -201,23 +215,19 @@ const styles = StyleSheet.create({
     padding: spacings.spacing.large
   },
   scrollViewContent: {
-    paddingBottom: 100, // Ajoute un padding en bas pour éviter que le contenu ne soit masqué par les boutons
+    paddingBottom: 100,
   },
   fixedButtonContainer: {
-    position: 'absolute', // Positionnement absolu
-    bottom: 20, // Distance du bas de l'écran
-    left: spacings.spacing.medium, // Distance du côté gauche
-    right: spacings.spacing.medium, // Distance du côté droit
-    flexDirection: 'row', // Aligne les enfants horizontalement
-    justifyContent: 'space-between', // Espace entre les boutons
-    // Ajoutez une ombre ou un fond si nécessaire pour améliorer la visibilité
-    // backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    // padding: spacings.spacing.small,
-    // borderRadius: 10,
+    position: 'absolute',
+    bottom: 20,
+    left: spacings.spacing.medium,
+    right: spacings.spacing.medium,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   buttonWrapper: {
     flex: 1,
-    marginHorizontal: 5, // Ajoute un petit espace entre les boutons
+    marginHorizontal: 5,
   },
 });
 

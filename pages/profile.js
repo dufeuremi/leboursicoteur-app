@@ -63,13 +63,9 @@ function SettingsScreen() {
   // Fonction pour gérer la déconnexion
   const handleSignOut = async () => {
     try {
-      await AsyncStorage.removeItem('userToken');
-      Alert.alert('Succès', 'Vous êtes déconnecté avec succès.', [
-        {
-          text: 'OK',
-          onPress: () => navigation.navigate('Fonds'),
-        },
-      ]);
+        await AsyncStorage.removeItem("userToken");
+        await AsyncStorage.removeItem("selected_game_id");
+        navigation.navigate('Fonds')
     } catch (error) {
       console.error('Erreur lors de la déconnexion :', error);
       Alert.alert('Erreur', 'Impossible de vous déconnecter.');

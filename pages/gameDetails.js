@@ -113,13 +113,13 @@ export default function Game() {
     fetchData();
     setTimeout(() => {
       setRefreshing(false);
-    }, 6000);
+    }, 5000); // Refresh de l'api
   }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
       fetchData();
-    }, 6000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, []);
@@ -130,7 +130,7 @@ export default function Game() {
         const now = Date.now();
         const timeLeft = gameData.game.finish_at - now;
         setTimeRemaining(timeLeft);
-      }, 6000);
+      }, 1000);
 
       return () => clearInterval(interval);
     }
@@ -305,7 +305,7 @@ console.log("length"+gameData.wallet.length);
                 style={styles.icon}
               />
               <Text style={[textStyles.heading2, { marginVertical: 15 }]}>
-                {userRankText} / {totalPlayers} boursicoteurs
+                {userRankText} / {totalPlayers} 
               </Text>
             </View>
           </View>

@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Changed to Ionicons
+import { Ionicons } from '@expo/vector-icons';
 import spacings from "../config-spacing";
 import texts from "../config-texts";
 import configColors from '../config-colors';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import moment from 'moment';
+import Button from './button';
 
-const GameCard = ({ game, onPress }) => {
+const GameCard = ({ game, onPress, participantss, onDelete }) => {
   const [timeRemaining, setTimeRemaining] = useState('');
+  const [participants, setParticipants] = useState(0);
 
   const now = moment();
   const isExpired = moment(game.finish_at).isBefore(now);
@@ -48,45 +51,63 @@ const GameCard = ({ game, onPress }) => {
     }
   }, [game.finish_at, isWaiting, isExpired]);
 
+  useEffect(() => {
+    if (game.numb && Array.isArray(game.numb)) {
+      let participantsCount = 0;
+      for (let i = 0; i < game.numb.length; i++) {
+        if (game.numb[i] === game.id && i + 1 < game.numb.length) {
+          participantsCount = game.numb[i + 1];
+          break;
+        }
+      }
+      setParticipants(participantsCount);
+    }
+  }, [game.numb, game.id]);
+
+  const renderRightActions = () => (
+    <View style={styles.deleteButtonContainer}>
+      <TouchableOpacity
+        style={styles.deleteButton}
+      >
+        <Ionicons name="trash-outline" size={28} color="white" style={styles.deleteIcon} />
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
-    <TouchableOpacity onPress={onPress} style={styles.container}>
-      <View style={styles.statusContainer}>
-        <Text style={[styles.statusText2, { color: statusColor, borderColor: statusColor }]}>
-          {statusText}
-        </Text>
-      </View>
-      <View style={styles.header}>
-        <Image 
-          source={require('../assets/adaptive-icon.png')}          
-          style={styles.avatar}
+    <Swipeable renderRightActions={renderRightActions}>
+      <TouchableOpacity onPress={onPress} style={styles.container}>
+        <View style={styles.statusContainer}>
+          <Text style={[styles.statusText2, { color: statusColor, borderColor: statusColor }]}> 
+            {statusText}
+          </Text>
+        </View>
+        <View style={styles.header}>
+          <Image 
+            source={require('../assets/adaptive-icon.png')}          
+            style={styles.avatar}
+          />
+          <Text style={styles.title}>{game.name}</Text>
+        </View>
+        <View style={styles.timeAndRatingContainer}>
+          {!isWaiting && !isExpired && (
+            <View style={styles.timeContainer}>
+              <Ionicons name="time-outline" size={18} color={configColors.black2} />
+              <Text style={[styles.dynamicStatusText, { color: statusColor }]}>{timeRemaining}</Text>
+            </View>
+          )}
+          <View style={styles.ratingContainer}>
+            <Ionicons name="person-outline" size={18} color={configColors.black2} /> 
+            <Text style={styles.ratingText}>{participantss}+</Text>
+          </View>
+        </View>
+        <Button
+          type="secondary"
+          title={isWaiting ? "Salle d'attente" : "Situation & classement"}
+          iconName={isWaiting ? "time-outline" : "document-text-outline"}
         />
-        <Text style={styles.title}>{game.name}</Text>
-      </View>
-      <View style={styles.timeAndRatingContainer}>
-        {/* Afficher le timer uniquement si l'état est "En cours" */}
-        {!isWaiting && !isExpired && (
-          <View style={styles.timeContainer}>
-            <Ionicons name="time-outline" size={18} color={configColors.black2} />
-            <Text style={[styles.dynamicStatusText, { color: statusColor }]}>{timeRemaining}</Text>
-          </View>
-        )}
-        <View style={styles.ratingContainer}>
-          <Ionicons name="person-outline" size={18} color={configColors.black2} /> 
-          <Text style={styles.ratingText}>5p</Text>
-        </View>
-      </View>
-      {/* Masquer le footer si l'état est "En attente" ou "Expiré" */}
-      { !isWaiting && !isExpired && (
-        <View style={styles.footer}>
-          <View style={styles.itemContainer}>
-            <Text style={styles.places}>1er</Text>
-          </View>
-          <View style={styles.itemContainer}>
-            <Text style={styles.price}>{game.initial_amount.toFixed(2)} €</Text>
-          </View>
-        </View>
-      )}
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Swipeable>
   );
 };
 
@@ -99,21 +120,11 @@ const styles = StyleSheet.create({
     width: "100%",
     marginBottom: spacings.spacing.small,
     overflow: "hidden",
-    
   },
   statusContainer: {
-    alignItems: 'flex-start', // Align to the start horizontally
+    alignItems: 'flex-start',
     marginBottom: spacings.spacing.medium,
-    borderRadius: spacings.corner.medium // Increased vertical spacing
-  },
-  statusText: {
-    color: configColors.indigo,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: configColors.indigo,
-    borderRadius: spacings.corner.small, // Ensures rounded corners
-    ...texts.body, // Assuming you have a body text style
+    borderRadius: spacings.corner.medium
   },
   statusText2: {
     color: configColors.indigo,
@@ -121,12 +132,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     borderWidth: 1,
     borderColor: configColors.indigo,
-    borderRadius: spacings.corner.small, // Ensures rounded corners
+    borderRadius: spacings.corner.small,
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacings.spacing.medium, // Increased vertical spacing
+    alignItems: 'center', marginBottom: spacings.spacing.medium,
+    marginBottom: spacings.spacing.medium,
   },
   avatar: {
     width: 40,
@@ -163,44 +174,24 @@ const styles = StyleSheet.create({
     ...texts.body,
     color: configColors.black1,
   },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
+  deleteButtonContainer: {
+    justifyContent: 'center',
+    alignItems: 'flex-end', // Alignement vers la droite de la carte
+    marginBottom: spacings.spacing.small,
+    width: "40ù"
+  },
+  deleteButton: {
+    backgroundColor: configColors.red,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: spacings.spacing.medium, // Increased vertical spacing
+    width: '100%',
+    height: '100%',
+    borderRadius: spacings.corner.medium,
   },
-  itemContainer: {
-    backgroundColor: configColors.grey3,
-    paddingVertical: spacings.spacing.small,
-    paddingHorizontal: spacings.spacing.medium,
-    borderRadius: spacings.corner.small,
-    marginRight: spacings.lineSpacing.tight, // Use marginRight for horizontal spacing
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  deleteIcon: {
+    marginHorizontal: spacings.spacing.large, // Ajustez cette valeur pour contrôler la distance par rapport au bord droit
   },
-  price: {
-    ...texts.bold,
-    color: configColors.black1,
-    fontSize: 18,
-  },
-  percentageText: {
-    ...texts.caption,
-    color: configColors.indigo,
-    fontSize: 14,
-    marginLeft: 5,
-  },
-  places: {
-    ...texts.bold,
-    color: configColors.black1,
-    fontSize: 18,
-  },
-  placesText: {
-    ...texts.caption,
-    color: configColors.indigo,
-    fontSize: 14,
-    marginLeft: 5,
-  },
+  
 });
 
 export default GameCard;

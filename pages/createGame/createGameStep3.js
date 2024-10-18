@@ -11,7 +11,7 @@ import InfoBanner from '../../components/info';
 import AmountInput from '../../components/amountInput';
 
 export default function CreateGameStep3({ navigation }) {
-  const [gameCapital, setGameCapital] = useState(''); // État pour le capital du jeu
+  const [gameCapital, setGameCapital] = useState(0); // État pour le capital du jeu
 
   // Fonction pour stocker le capital du jeu dans AsyncStorage
   const storeGameCapital = async () => {
