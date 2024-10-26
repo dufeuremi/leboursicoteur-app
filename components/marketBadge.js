@@ -73,6 +73,7 @@ const MarketBadge = ({ icon, value, percentageChange, amount, name }) => {
   const variationIcon = isPositive ? '↗' : '↘';
 
   return (
+    <View style={styles.cont}>
     <View style={styles.container}>
       <Image source={imageMap[name] || require('../assets/avatar.png')} style={styles.icon} />
       <View style={styles.textContainer}>
@@ -85,21 +86,26 @@ const MarketBadge = ({ icon, value, percentageChange, amount, name }) => {
         </Text>
       </View>
     </View>
+    </View>
   );
 };
 
 // Define the styles
 const styles = StyleSheet.create({
+  cont:{
+  },
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'transparent',
+    backgroundColor: colors.white,
     paddingHorizontal: spacings.spacing.small,
     paddingVertical: spacings.spacing.small,
-    borderRadius: spacings.corner.medium,
-    borderColor: colors.grey5,
-    borderWidth: 1,
+    borderRadius:spacings.corner.small,
+    borderColor: colors.grey3,
+    borderWidth: 0,
+    borderBottomWidth: 1,
     marginBottom: 10,
+    
   },
   icon: {
     width: 35, // Adjust the size as needed

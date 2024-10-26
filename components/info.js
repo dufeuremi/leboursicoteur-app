@@ -1,4 +1,3 @@
-// InfoBanner.js
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -6,11 +5,11 @@ import colors from '../config-colors';
 import configSpacing from '../config-spacing';
 import textStyles from '../config-texts'; 
 
-const InfoBanner = ({ text, iconType }) => {
+const InfoBanner = ({ text, iconType, background }) => {
   const iconName = iconType === 'time' ? 'time-outline' : 'information-circle-outline';
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, !background && styles.noBackground]}>
       <Ionicons name={iconName} size={20} color={colors.black2} style={styles.icon} />
       <Text style={styles.text}>
         {text}
@@ -27,7 +26,10 @@ const styles = StyleSheet.create({
     padding: configSpacing.spacing.small,
     borderRadius: configSpacing.corner.medium,
     marginBottom: 0,
-
+  },
+  
+  noBackground: {
+    backgroundColor: 'transparent',
   },
   icon: {
     marginRight: 10,

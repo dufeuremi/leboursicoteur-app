@@ -10,32 +10,38 @@ import configColors from '../../config-colors';
 import InfoBanner from '../../components/info';
 import AmountInput from '../../components/amountInput';
 
-export default function CreateGameStep3({ navigation }) {
+export default function CreateGameStep3B({ navigation }) {
   const [gameCapital, setGameCapital] = useState(0); // État pour le capital du jeu
 
   // Fonction pour stocker le capital du jeu dans AsyncStorage
   const storeGameCapital = async () => {
     try {
-      await AsyncStorage.setItem('game_capital', gameCapital); // Stocker le capital du jeu
+      await AsyncStorage.setItem('game_fees', gameCapital); // Stocker le capital du jeu
       
-      navigation.navigate('CreateGameStep3B'); // Naviguer vers l'étape suivante
+      navigation.navigate('CreateGameStep5'); // Naviguer vers l'étape suivante
     } catch (e) {
-      console.error('GAME CAPITAL Erreur lors de la sauvegarde du capital du jeu', e);
+      console.error('error', e);
     }
+  };
+
+  // Fonction pour gérer la modification de l'entrée et convertir les virgules en points
+  const handleCapitalChange = (value) => {
+    const formattedValue = value.replace(',', '.');
+    setGameCapital(formattedValue);
   };
 
   return (
     <View>
       <ProgressBar currentStep={3} totalSteps={6} color={configColors.indigo}/>
       <View style={configComponent.backgroundCentredItems}>
-        <Text style={textStyles.heading1}>Definir un capital de départ</Text>
-        <InfoBanner text="Le montant définira la somme initiale de la simulation, égale entre chaque participant" iconType="info" />
+        <Text style={textStyles.heading1}>Définir les frais de transaction</Text>
+        <InfoBanner text="Cela représente le coût de chaque achat et vente. Les frais sont habituellement de 0,10%." iconType="info" />
 
         <AmountInput 
-          placeholder="Montant" 
+          placeholder="Pourcentage %" 
           keyboard="digits" 
           capitalize="yes" 
-          onChangeText={setGameCapital} // Mettre à jour l'état du capital à chaque modification
+          onChangeText={handleCapitalChange} // Utiliser la fonction qui convertit la valeur
         />
         
         <Button 

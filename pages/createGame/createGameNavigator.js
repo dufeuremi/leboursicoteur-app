@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import SignupStep1 from './createGameStep1';
 import SignupStep2 from './createGameStep2';
 import SignupStep3 from './createGameStep3';
+import SignupStep3B from './createGameStep3B';
 import SignupStep4 from './createGameStep4';
 import SignupStep5 from './createGameStep5';
 import colors from '../../config-colors';
@@ -38,6 +39,7 @@ export default function CreateGameScreens() {
       <Stack.Screen name="CreateGameStep1" component={SignupStep1} options={{ title: 'Créer un fond' }} />
       <Stack.Screen name="CreateGameStep2" component={SignupStep2} options={{ title: 'Créer un fond' }} />
       <Stack.Screen name="CreateGameStep3" component={SignupStep3} options={{ title: 'Créer un fond' }} />
+      <Stack.Screen name="CreateGameStep3B" component={SignupStep3B} options={{ title: 'Créer un fond' }} />
       <Stack.Screen name="CreateGameStep4" component={SignupStep4} options={{ title: 'Créer un fond' }} />
       <Stack.Screen name="CreateGameStep5" component={SignupStep5} options={{ title: 'Créer un fond' }} />
 

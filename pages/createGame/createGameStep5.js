@@ -14,6 +14,7 @@ export default function CreateGameStep5({ navigation }) {
   const [gameCapital, setGameCapital] = useState('');
   const [teamSize, setTeamSize] = useState(0);
   const [userToken, setUserToken] = useState('');
+  const [gamefee, setGameFee] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -23,11 +24,13 @@ export default function CreateGameStep5({ navigation }) {
         const capital = await AsyncStorage.getItem('game_capital');
         const size = await AsyncStorage.getItem('team_size');
         const token = await AsyncStorage.getItem('userToken');
+        const fees = await AsyncStorage.getItem('game_fees');
 
         if (name) setGameName(name);
         if (capital) setGameCapital(capital);
         if (size) setTeamSize(Number(size));
         if (token) setUserToken(token);
+        if (fees) setGameFee(fees);
 
       } catch (error) {
         console.error('Erreur lors de la récupération des données du cache', error);
@@ -43,6 +46,7 @@ export default function CreateGameStep5({ navigation }) {
       finish_at: null,
       initial_amount: Number(gameCapital),
       team_sizes: teamSize,
+      fees: gamefee
     };
 
     console.log('Corps de la requête :', body);

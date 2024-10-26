@@ -40,7 +40,7 @@ function FondsScreen() {
       const userToken = await AsyncStorage.getItem('userToken');
       
       if (!userToken) {
-        setGames([]);
+        setGames([]);  // Si pas de token, on s'assure de vider la liste de jeux
         return;
       }
   
@@ -54,17 +54,22 @@ function FondsScreen() {
       });
       const data = await response.json();
   
+      // Vérifie que data.games est défini et est un tableau
       const allGames = [];
       console.log(data);
   
-      data.games.forEach(gameArray => {
-        const game = gameArray.length > 0 ? gameArray[0] : null;
+      if (Array.isArray(data.games)) {
+        data.games.forEach(gameArray => {
+          const game = gameArray.length > 0 ? gameArray[0] : null;
   
-        if (game) {
-          const participants = calculateParticipants(data.numb, game.id);
-          allGames.push({ ...game, participants });
-        }
-      });
+          if (game) {
+            const participants = calculateParticipants(data.numb, game.id);
+            allGames.push({ ...game, participants });
+          }
+        });
+      } else {
+        console.error("data.games n'est pas défini ou n'est pas un tableau");
+      }
   
       setGames(allGames);
     } catch (error) {
@@ -73,6 +78,7 @@ function FondsScreen() {
       setLoading(false);
     }
   };
+
 
   const calculateParticipants = (numbArray, gameId) => {
     if (numbArray && Array.isArray(numbArray)) {
@@ -128,10 +134,9 @@ function FondsScreen() {
     <View style={styles.container}>
       {loading ? (
         <View style={styles.loaderContainer}>
-          <SkeletonLoader width={310} height={50} borderRadius={16} />
-          <SkeletonLoader width={310} height={200} borderRadius={16} />
-          <SkeletonLoader width={310} height={200} borderRadius={16} />
-          <SkeletonLoader width={310} height={200} borderRadius={16} />
+          <SkeletonLoader width={310} height={250} borderRadius={16} />
+          <SkeletonLoader width={310} height={250} borderRadius={16} />
+          <SkeletonLoader width={310} height={250} borderRadius={16} />
         </View>
       ) : ( 
         <ScrollView 
@@ -150,8 +155,8 @@ function FondsScreen() {
               <Image
                 source={require('../assets/wallet.png')}
                 style={{
-                  width: 120,
-                  height: 120,
+                  width: 160,
+                  height: 160,
                   shadowColor: colors.indigo,
                   marginTop: spacings.spacing.huge
                 }}

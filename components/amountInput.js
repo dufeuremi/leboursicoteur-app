@@ -4,6 +4,13 @@ import configColors from '../config-colors';
 import configSpacing from '../config-spacing';
 
 const AmountInput = ({ placeholder, capitalize, secureTextEntry, value, onChangeText }) => {
+  
+  // Fonction pour remplacer les virgules par des points
+  const handleTextChange = (text) => {
+    const updatedText = text.replace(',', '.'); // Remplace les virgules par des points
+    onChangeText(updatedText);
+  };
+
   return (
     <View style={styles.container}>
       <TextInput
@@ -13,8 +20,8 @@ const AmountInput = ({ placeholder, capitalize, secureTextEntry, value, onChange
         autoCapitalize={capitalize}
         secureTextEntry={secureTextEntry}
         value={value}
-        onChangeText={onChangeText}
-        keyboardType="numeric" // Vous pouvez le changer en "numeric" si nécessaire
+        onChangeText={handleTextChange} // Utilisation de la fonction modifiée
+        keyboardType="numeric"
       />
     </View>
   );

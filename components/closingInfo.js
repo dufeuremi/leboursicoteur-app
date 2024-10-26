@@ -46,9 +46,11 @@ const ClosingInfo = ({ iconType }) => {
   }, []);
 
   return (
+    <View>
     <View style={styles.container}>
       <Ionicons name={iconName} size={20} color={colors.black2} style={styles.icon} />
       <Text style={[styles.text, styles.highlight]}>{message}</Text>
+    </View>
     </View>
   );
 };

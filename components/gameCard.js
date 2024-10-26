@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, Image, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import spacings from "../config-spacing";
 import texts from "../config-texts";
@@ -12,6 +12,8 @@ import Button from './button';
 const GameCard = ({ game, onPress, participantss, onDelete }) => {
   const [timeRemaining, setTimeRemaining] = useState('');
   const [participants, setParticipants] = useState(0);
+  
+  const deleteButtonOpacity = useRef(new Animated.Value(0)).current; // Initialiser la valeur animée
 
   const now = moment();
   const isExpired = moment(game.finish_at).isBefore(now);
@@ -64,21 +66,30 @@ const GameCard = ({ game, onPress, participantss, onDelete }) => {
     }
   }, [game.numb, game.id]);
 
-  const renderRightActions = () => (
-    <View style={styles.deleteButtonContainer}>
-      <TouchableOpacity
-        style={styles.deleteButton}
-      >
-        <Ionicons name="trash-outline" size={28} color="white" style={styles.deleteIcon} />
-      </TouchableOpacity>
-    </View>
-  );
+  const renderRightActions = () => {
+    // Démarrer l'animation avec easing 'ease-out' lorsque le bouton est visible
+    Animated.timing(deleteButtonOpacity, {
+      toValue: 1, // Final opacity value
+      duration: 300,
+      easing: Easing.out(Easing.ease), // Appliquer easing en sortie
+      useNativeDriver: true, // Utiliser le driver natif pour de meilleures performances
+    }).start();
+
+    return (
+      <Animated.View style={[styles.deleteButtonContainer, { opacity: deleteButtonOpacity }]}>
+        <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
+          <Ionicons name="trash-outline" size={28} color="white" style={styles.deleteIcon} />
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
 
   return (
     <Swipeable renderRightActions={renderRightActions}>
-      <TouchableOpacity onPress={onPress} style={styles.container}>
+      <TouchableOpacity onPress={onPress} style={styles.container} activeOpacity={1}>
+
         <View style={styles.statusContainer}>
-          <Text style={[styles.statusText2, { color: statusColor, borderColor: statusColor }]}> 
+          <Text style={[styles.statusText2, { color: statusColor, borderColor: statusColor }]}>
             {statusText}
           </Text>
         </View>
@@ -178,7 +189,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'flex-end', // Alignement vers la droite de la carte
     marginBottom: spacings.spacing.small,
-    width: "40ù"
+    width: "100%"
   },
   deleteButton: {
     backgroundColor: configColors.red,
@@ -187,6 +198,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: spacings.corner.medium,
+    paddingLeft: 220,
   },
   deleteIcon: {
     marginHorizontal: spacings.spacing.large, // Ajustez cette valeur pour contrôler la distance par rapport au bord droit

@@ -8,12 +8,15 @@ const PinInput = ({ onPinEntered }) => {
   const pinLength = 5;
 
   const handleChange = (value) => {
-    if (value.length <= pinLength) {
-      setPin(value);
+    // Remplacer les virgules par des points
+    const updatedValue = value.replace(',', '.');
+
+    if (updatedValue.length <= pinLength) {
+      setPin(updatedValue);
       
       // Si 5 chiffres sont entrés, on déclenche l'événement onPinEntered
-      if (value.length === pinLength) {
-        onPinEntered(value); // Appelle la fonction passée en prop
+      if (updatedValue.length === pinLength) {
+        onPinEntered(updatedValue); // Appelle la fonction passée en prop
       }
     }
   };
